@@ -1,0 +1,151 @@
+<!doctype html>
+
+<form action="/action_page.php">
+  <label for="fname">Event:</label>
+  <select name="event" id="event">
+  <option value="333">3x3</option>
+  <option value="222">2x2</option>
+  <option value="pyram">Pyraminx</option>
+  <option value="sq1">Square-1</option>
+  <option value="minx">Megaminx</option>
+  <option value="skewb">Skewb</option>
+  <option value="clock">clock</option>
+  <option value="444">4x4</option>
+  <option value="555">5x5</option>
+  <option value="666">6x6</option>
+  <option value="777">7x7</option>
+  <option value="333bf">3x3 Blind</option>
+  <option value="444bf">4x4 Blind</option>
+  <option value="555bf">5x5 Blind</option>
+  <option value="333mbf">3x3 Multiblind</option>
+  <option value="333fm">3x3 FMC</option>
+  <option value="333oh">3x3 OH</option>
+</select><br><br>
+  <label for="lname">WCA ID:</label>
+  <input type="text" id="wcaid" name="wcaid"><br><br>
+  <label for="lname">Type:</label>
+  <select name="type" id="type">
+  <option value="average">average</option>
+  <option value="best">single</option>
+</select><br><br>
+  <label for="lname">Show DNFs:</label>
+  <select name="Show DNFs?" id="showdnfs">
+  <option value="True">Yes</option>
+  <option value="False">No</option>
+</select><br><br>
+  <input onclick="loadChart(document.getElementById('wcaid').value,document.getElementById('event').value,document.getElementById('type').value,document.getElementById('showdnfs').value)" type="button" value="Submit" id="submit">
+</form>
+
+<div>
+  <canvas id="myChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+var progressChart = null;
+//const button = document.getElementById('submit');
+//button.onclick = function()alert("test")//= loadChart("2022YAOC02","333","average");
+  function loadChart(wcaId, event, type, showdnfs){
+  function secToMin(sec) {
+	var min = Math.floor(sec / 60);
+    sec = sec % 60;
+    return ((min < 10) ? "0"+min : min) + ":" + ((sec < 10) ? "0"+sec : sec);
+}
+  if (event == "333mbf"){
+    type = "best";
+    document.getElementById('type').value = "best";
+  }
+  if(progressChart!=null){
+    progressChart.destroy();
+    }
+
+    function filter(data){
+      //var event = '333'
+      //var type = 'average'
+      
+
+      var solveTimes = [];
+      var compNames = [];    
+      let i = 0
+      for (let comp in data.results){
+        if (Object.keys(data.results[Object.keys(data.results)[i]]).includes(event)){
+          for (x = 0; x < data.results[Object.keys(data.results)[i]][event].length; x++){
+            /*console.log(event);
+            console.log(type);
+            if (event == "333fm"){
+              console.log("1")
+            }
+            if (type == "best"){
+              console.log("2")
+            }*/
+		//console.log((showdnfs));
+    //console.log(showdnfs == "False");
+		  /*console.log(!Boolean(showdnfs));
+		  console.log(data.results[Object.keys(data.results)[i]][event][x][type]);
+      console.log(Boolean(((data.results[Object.keys(data.results)[i]][event][x][type])) <= 0))
+      if ((data.results[Object.keys(data.results)[i]][event][x][type]) <= 0){
+			console.log("2")
+		  }*/
+	    if (!((showdnfs == "False") && ((data.results[Object.keys(data.results)[i]][event][x][type])) <= 0)){
+		    console.log("1");
+	    if ((event == "333fm") && (type == "best")){
+              console.log("3");
+              solveTimes.push((data.results[Object.keys(data.results)[i]][event][x][type]));
+            }else{
+              solveTimes.push((data.results[Object.keys(data.results)[i]][event][x][type])/100);
+            }
+	    compNames.push(comp+' '+data.results[Object.keys(data.results)[i]][event][x].round);
+	    }
+          }
+        }
+        //console.log(solveTimes)
+        i++
+      }
+
+      //console.log(solveTimes)
+
+      const canvas = document.getElementById('myChart');
+      ctx = canvas.getContext("2d")
+      //ctx.getContext("2d").ctx.clearRect(0, 0, ctx.width, ctx.height);
+      progressChart = new Chart(ctx, {
+        type: 'line',
+        //labels = Utils.months({count: 7}),
+        data: {
+            labels: compNames.reverse(),
+            datasets: [
+                {
+                label: wcaId + ' ' + event + ' ' + type,
+                data: solveTimes.reverse(),
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+                }
+          ]
+        },
+
+      });
+    }
+    //alert(wcaId)
+    //var wcaId = '2018YAOC02'
+    let apiUrl = `https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/persons/${wcaId.toUpperCase()}.json`;
+
+
+    // Make a GET request
+    fetch(apiUrl)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        filter(data);
+        //apiData = data;
+        //console.log(apiData)
+      })
+      .catch(error => console.error('Error fetching WCA api:', error));
+
+    /*for (let i = 0; i < apiData.rank.averages.length; i++) {
+      if (apiData.rank.averages[i].eventId = "333"){
+        event = 
+      }
+    }*/
+}
+</script>
