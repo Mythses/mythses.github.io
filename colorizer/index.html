@@ -1,6 +1,8 @@
 <!doctype html>
 <html>
 <body style="background-color:powderblue;">
+    <h1 id="skibiti">loading</h1>
+</body>
 <title>Colorizer</title>    
 </html>
 
@@ -16,7 +18,10 @@ fetch(apiUrl)
     console.log(data);
     //filter(data);
     apiData = data;
-    document.body.style.backgroundColor = data.hexCode; 
+    document.body.style.backgroundColor = "#" + data.hexCode;
+	const skibiti = document.getElementById("skibiti")
+    skibiti.textContent = data.name;
+    skibiti.style.color = "#" + [data.hexCode.slice(0, 2),data.hexCode.slice(2, 4),data.hexCode.slice(4, 6)].map(x => (255-parseInt(x, 16)).toString(16)).join("")
     console.log(data.hexCode);
     //console.log(apiData)
   })
