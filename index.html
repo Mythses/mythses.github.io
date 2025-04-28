@@ -217,6 +217,35 @@
         #close-details-button:hover {
             color: #fff;
         }
+
+        /* Wormhole Animation Overlay */
+        #wormhole-overlay {
+            position: fixed;
+            top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,1) 100%);
+z-index: 100; /* Ensure it's on top of everything */
+opacity: 0;
+pointer-events: none; /* Initially not interactive */
+transition: opacity 0.8s ease-in-out; /* Increased transition duration */
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 3em;
+color: #00b4ff;
+text-shadow: 0 0 20px #00b4ff;
+/* Add initial scale for animation */
+transform: scale(0.5);
+        }
+         #wormhole-overlay.active {
+            opacity: 1;
+            pointer-events: auto; /* Enable interaction during animation */
+             /* Animation for lightspeed effect */
+            transform: scale(5); /* Scale up significantly */
+            transition: opacity 0.8s ease-in-out, transform 1.5s ease-in; /* Animate opacity and transform */
+         }
     </style>
 </head>
 <body>
@@ -245,6 +274,10 @@
         <button id="travel-button">Travel to Page</button>
     </div>
 
+    <div id="wormhole-overlay">
+        Traveling...
+    </div>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -253,10 +286,10 @@
     <script>
         // List of your project pages (replace with your actual page names, descriptions, and versions)
         const pageList = [
-            { name: "randomcolor", version: "v1.0", description: "Generates random colors with their names from colornames.org" },
-            { name: "graphisizer", version: "v2.0", description: "A tool for visualizing WCA results" },
-            { name: "polystats", version: "alpha 3", description: "Displays stats and data for the game Polytrack" },
-            { name: "wordhunt", version: "alpha 1", description: "A trainer for the gamepigeon word hunt game" },
+            { name: "randomcolor", displayName: "Random Color Generator", version: "1.0", description: "Generates random colors with their names from colornames.org" },
+            { name: "graphisizer", displayName: "Graphisizer", version: "2.0", description: "A tool for visualizing WCA results" },
+            { name: "polystats", displayName: "PolyStats", version: "alpha 3", description: "Displays stats and data for the game Polytrack" },
+            { name: "wordhunt", displayName: "Word Hunt Trainer", version: "alpha 1", description: "A trainer for the gamepigeon word hunt game" },
         ];
 
         let scene, camera, renderer, controls;
@@ -280,6 +313,7 @@
         const detailsPageDescriptionElement = document.getElementById('details-page-description');
         const travelButton = document.getElementById('travel-button');
         const closeDetailsButton = document.getElementById('close-details-button');
+        const wormholeOverlayElement = document.getElementById('wormhole-overlay');
 
 
         // --- Initialization ---
@@ -310,6 +344,8 @@
             controls.enableZoom = true; // Enable zoom
             controls.minDistance = 5; // Minimum zoom distance
             controls.maxDistance = 100; // Maximum zoom distance
+             // Disable rotation by default, enable only when mouse is not over UI
+            controls.enableRotate = true; // Start with rotation enabled
             console.log("OrbitControls setup complete.");
 
             // Raycaster for interaction
@@ -335,14 +371,18 @@
             searchInput.addEventListener('input', onSearchInput);
             closeDetailsButton.addEventListener('click', deselectStar); // Close button for details
 
-            // Add mouse enter/leave listeners for UI elements to control zoom
+            // Add mouse enter/leave listeners for UI elements to control interaction
             overlayElement.addEventListener('mouseenter', () => isMouseOverOverlay = true);
             overlayElement.addEventListener('mouseleave', () => isMouseOverOverlay = false);
             selectedStarDetailsElement.addEventListener('mouseenter', () => isMouseOverOverlay = true);
             selectedStarDetailsElement.addEventListener('mouseleave', () => isMouseOverOverlay = false);
 
-             // Prevent default scroll behavior when mouse is over UI elements
+             // Prevent default scroll behavior when mouse is over UI elements and control OrbitControls
             window.addEventListener('wheel', onMouseWheel, { passive: false });
+             // Control OrbitControls rotation based on mouse position
+            renderer.domElement.addEventListener('mousemove', onCanvasMouseMove, false);
+            renderer.domElement.addEventListener('mousedown', onCanvasMouseDown, false);
+            renderer.domElement.addEventListener('mouseup', onCanvasMouseUp, false);
 
 
             // Start the animation loop
@@ -439,8 +479,8 @@
 
             filteredPages.forEach(pageData => {
                 const li = document.createElement('li');
-                li.textContent = `${pageData.name} (v${pageData.version})`; // Display name and version
-                li.dataset.pageName = pageData.name; // Store page name for easy lookup
+                li.textContent = `${pageData.displayName} (${pageData.version})`; // Display displayName and version
+                li.dataset.pageName = pageData.name; // Store original name for easy lookup
                 li.dataset.index = pageList.findIndex(p => p.name === pageData.name); // Store original index
                 li.addEventListener('click', handlePageListItemClick);
                 pageListElement.appendChild(li);
@@ -451,7 +491,7 @@
         function handlePageListItemClick(event) {
             const clickedPageName = event.target.dataset.pageName;
 
-            // Find the corresponding star group
+            // Find the corresponding star group using the original name
             const starGroup = stars.find(s => s.userData.isPageStar && s.userData.page.name === clickedPageName);
 
             if (starGroup) {
@@ -513,7 +553,7 @@
             if (intersects.length > 0) {
                 const intersectedMesh = intersects[0].object;
                 const intersectedStarGroup = intersectedMesh.parent; // Get the parent group
-                infoBox.innerHTML = `<strong>${intersectedStarGroup.userData.page.name} (v${intersectedStarGroup.userData.page.version})</strong><br>${intersectedStarGroup.userData.page.description}`; // Display name, version, and description
+                infoBox.innerHTML = `<strong>${intersectedStarGroup.userData.page.displayName} (${intersectedStarGroup.userData.page.version})</strong><br>${intersectedStarGroup.userData.page.description}`; // Display displayName, version, and description
                 infoBox.style.left = `${event.clientX + 15}px`;
                 infoBox.style.top = `${event.clientY + 15}px`;
                 infoBox.classList.add('visible');
@@ -560,8 +600,9 @@
             const isOverOverlay = mousePosition.x > overlayRect.left && mousePosition.x < overlayRect.right &&
                                  mousePosition.y > overlayRect.top && mousePosition.y < overlayRect.bottom;
 
-            const isOverDetails = mousePosition.x > detailsRect.left && mousePosition.x < detailsRect.right &&
-                                  mousePosition.y > detailsRect.top && mousePosition.y < detailsRect.bottom;
+            const isOverDetails = selectedStarDetailsElement.classList.contains('visible') && // Only check if details are visible
+                                 mousePosition.x > detailsRect.left && mousePosition.x < detailsRect.right &&
+                                 mousePosition.y > detailsRect.top && mousePosition.y < detailsRect.bottom;
 
             if (isOverOverlay || isOverDetails) {
                 // Prevent default scroll behavior if mouse is over a UI element
@@ -570,14 +611,36 @@
             // If not over a UI element, OrbitControls will handle the zoom
         }
 
+        // --- Canvas Mouse Move Handler to Control Rotation ---
+        function onCanvasMouseMove() {
+             // Enable rotation only if the mouse is over the canvas and not over a UI overlay
+            controls.enableRotate = !isMouseOverOverlay;
+        }
+
+         // --- Canvas Mouse Down Handler to Control Rotation ---
+        function onCanvasMouseDown() {
+             // Enable rotation only if the mouse is over the canvas and not over a UI overlay
+             // This is important to prevent dragging the galaxy when clicking on UI
+             controls.enableRotate = !isMouseOverOverlay;
+        }
+
+         // --- Canvas Mouse Up Handler ---
+        function onCanvasMouseUp() {
+             // Re-enable rotation after mouse up, regardless of overlay state,
+             // as the user might have dragged off the overlay.
+             // The onCanvasMouseMove will then disable it again if the mouse is over the overlay.
+            controls.enableRotate = true;
+        }
+
 
         function onSearchInput(event) {
             const searchTerm = event.target.value.toLowerCase();
-            // Filter based on name or description
+            // Filter based on displayName, name, description, or version
             const filteredPages = pageList.filter(pageData =>
+                pageData.displayName.toLowerCase().includes(searchTerm) ||
                 pageData.name.toLowerCase().includes(searchTerm) ||
                 pageData.description.toLowerCase().includes(searchTerm) ||
-                pageData.version.toLowerCase().includes(searchTerm) // Include version in search
+                pageData.version.toLowerCase().includes(searchTerm)
             );
             populatePageList(filteredPages);
 
@@ -585,7 +648,8 @@
             stars.forEach(starGroup => {
                  if (starGroup.userData.isPageStar) {
                     const pageData = starGroup.userData.page;
-                    const isMatch = pageData.name.toLowerCase().includes(searchTerm) ||
+                    const isMatch = pageData.displayName.toLowerCase().includes(searchTerm) ||
+                                    pageData.name.toLowerCase().includes(searchTerm) ||
                                     pageData.description.toLowerCase().includes(searchTerm) ||
                                     pageData.version.toLowerCase().includes(searchTerm);
                     // Highlight the main star mesh
@@ -596,7 +660,8 @@
             // Deselect any currently selected star if it doesn't match the search
             if (selectedStar) {
                 const selectedPageData = selectedStar.userData.page;
-                 const isSelectedMatch = selectedPageData.name.toLowerCase().includes(searchTerm) ||
+                 const isSelectedMatch = selectedPageData.displayName.toLowerCase().includes(searchTerm) ||
+                                         selectedPageData.name.toLowerCase().includes(searchTerm) ||
                                          selectedPageData.description.toLowerCase().includes(searchTerm) ||
                                          selectedPageData.version.toLowerCase().includes(searchTerm);
                 if (!isSelectedMatch) {
@@ -633,53 +698,65 @@
             overlayElement.classList.add('hidden');
 
             // Populate and show the selected star details overlay
-            detailsPageNameElement.textContent = starGroup.userData.page.name;
+            detailsPageNameElement.textContent = starGroup.userData.page.displayName; // Use displayName
             detailsPageVersionElement.textContent = `Version: ${starGroup.userData.page.version}`; // Display version
             detailsPageDescriptionElement.textContent = starGroup.userData.page.description;
-            // Update travel button text and URL
-            travelButton.textContent = `Travel to ${starGroup.userData.page.name}`;
-            travelButton.onclick = () => {
-                 window.location.href = `/${starGroup.userData.page.name.toLowerCase().replace(/\s+/g, '-')}`;
+            // Update travel button text and URL (use original name for URL)
+            travelButton.textContent = `Travel to ${starGroup.userData.page.displayName}`;
+            travelButton.onclick = (event) => {
+                 event.preventDefault(); // Prevent default button click behavior
+                 initiateWormholeTravel(`/${starGroup.userData.page.name.toLowerCase().replace(/\s+/g, '-')}`);
             };
             selectedStarDetailsElement.classList.add('visible');
 
 
             // Animate camera to focus on the selected star (only if TWEEN is defined)
             if (typeof TWEEN !== 'undefined') {
-                // Calculate target position to center the star and leave space for the details panel
-                // This is a simplified approach; might need adjustment based on screen size and panel width
-                const offset = new THREE.Vector3(-15, 0, 10); // Offset to the left and slightly forward
-                targetPosition.copy(selectedStar.position).add(offset);
+                 // Store current camera position and controls target
+                const currentCameraPosition = camera.position.clone();
+                const currentControlsTarget = controls.target.clone();
 
+                // Calculate the desired camera position relative to the star
+                // This position will be used as an intermediate step before orbiting
+                const cameraOffset = new THREE.Vector3(-15, 0, 10); // Offset to the left and slightly forward
+                const intermediateCameraPosition = selectedStar.position.clone().add(cameraOffset);
 
-                // Keep the camera looking at the star's position
-                const lookAtPosition = selectedStar.position.clone();
-
+                // Animate the camera position to the intermediate position
+                new TWEEN.Tween(currentCameraPosition)
+                    .to(intermediateCameraPosition, 1000) // Animation duration
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onUpdate(() => {
+                        camera.position.copy(currentCameraPosition);
+                         // Keep looking at the star during the initial movement
+                        camera.lookAt(selectedStar.position);
+                    })
+                    .onComplete(() => {
+                        // After reaching the intermediate position, animate the controls target
+                        // This creates the orbiting effect
+                        new TWEEN.Tween(currentControlsTarget)
+                            .to(selectedStar.position, 1000) // Animation duration for target
+                            .easing(TWEEN.Easing.Quadratic.InOut)
+                            .onUpdate(() => {
+                                controls.target.copy(currentControlsTarget);
+                            })
+                            .onComplete(() => {
+                                // Re-enable controls after all animations
+                                controls.enabled = true;
+                                isAnimatingCamera = false;
+                                 // Ensure camera is looking at the star at the end
+                                camera.lookAt(selectedStar.position);
+                            })
+                            .start();
+                    })
+                    .start();
 
                 // Disable controls during animation
                 controls.enabled = false;
                 isAnimatingCamera = true;
 
-                new TWEEN.Tween(camera.position)
-                    .to(targetPosition, 1000) // Animation duration in milliseconds
-                    .easing(TWEEN.Easing.Quadratic.InOut)
-                    .onUpdate(() => {
-                        // Continuously look at the star during the animation
-                         camera.lookAt(lookAtPosition);
-                    })
-                    .onComplete(() => {
-                        // Re-enable controls after animation
-                        controls.enabled = true;
-                        isAnimatingCamera = false;
-                         // Ensure camera is looking at the star at the end
-                        camera.lookAt(lookAtPosition);
-                         // Update controls target to the star's position after animation
-                        controls.target.copy(selectedStar.position);
-                    })
-                    .start();
             } else {
                  console.warn("TWEEN is not defined. Camera animation to selected star skipped.");
-                 // If TWEEN is not available, just set the camera position directly
+                 // If TWEEN is not available, just set the camera position and target directly
                  const offset = new THREE.Vector3(-15, 0, 10);
                  camera.position.copy(selectedStar.position).add(offset);
                  camera.lookAt(selectedStar.position);
@@ -706,16 +783,24 @@
 
                  // Animate camera back to a default view or allow controls to take over (only if TWEEN is defined)
                 if (!isAnimatingCamera && typeof TWEEN !== 'undefined') {
-                    // Example: Animate back to initial position or a wider view
-                     new TWEEN.Tween(camera.position)
-                        .to(new THREE.Vector3(0, 0, 50), 1000) // Animate back to initial z=50
+                    // Animate camera position and controls target back to initial state
+                    const initialCameraPosition = new THREE.Vector3(0, 0, 50);
+                    const initialControlsTarget = new THREE.Vector3(0, 0, 0);
+
+                    new TWEEN.Tween(camera.position)
+                        .to(initialCameraPosition, 1000) // Animation duration
+                        .easing(TWEEN.Easing.Quadratic.InOut)
+                        .start();
+
+                     new TWEEN.Tween(controls.target)
+                        .to(initialControlsTarget, 1000) // Animation duration
                         .easing(TWEEN.Easing.Quadratic.InOut)
                          .onComplete(() => {
                              // Ensure camera is looking towards the center
-                             camera.lookAt(new THREE.Vector3(0, 0, 0));
-                             controls.target.copy(new THREE.Vector3(0, 0, 0)); // Reset controls target
+                             camera.lookAt(initialControlsTarget);
                          })
                         .start();
+
                 } else if (!isAnimatingCamera) {
                      console.warn("TWEEN is not defined. Camera animation on deselect skipped.");
                      // If TWEEN is not available, just reset camera position and lookAt
@@ -725,6 +810,19 @@
                 }
             }
         }
+
+         // --- Initiate Wormhole Travel Animation and Redirect ---
+        function initiateWormholeTravel(url) {
+            // Show the wormhole overlay and activate its animation/transition
+            wormholeOverlayElement.classList.add('active');
+
+            // Wait for the animation to play before redirecting
+            // The timeout should match or be slightly less than the transition duration
+            setTimeout(() => {
+                window.location.href = url;
+            }, 1200); // Redirect after 1200ms (adjust based on CSS transition)
+        }
+
 
         // --- Check if mouse is within a rectangle ---
         function isMouseInRect(mouseX, mouseY, rect) {
