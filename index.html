@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
+<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-QC9TD3HHM3"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -12,7 +12,7 @@
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test</title>
+    <title>My Project Galaxy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -132,6 +132,8 @@
             opacity: 0;
             transition: opacity 0.3s ease;
             border: 1px solid rgba(0, 180, 255, 0.5);
+            max-width: 300px; /* Limit width */
+            white-space: normal; /* Allow text wrapping */
         }
          #info-box.visible {
             opacity: 1;
@@ -142,7 +144,7 @@
     <div id="galaxy-container"></div>
     <div id="overlay">
         <div id="content">
-            <h1>herro</h1>
+            <h1>Welcome to My Project Galaxy</h1>
             <p>Explore the stars, each representing a different project!</p>
             <div id="search-container">
                 <input type="text" id="search-input" placeholder="Search projects...">
@@ -161,17 +163,17 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/tween.min.js"></script>
 
     <script>
-        // List of your project pages (replace with your actual page names)
+        // List of your project pages (replace with your actual page names and descriptions)
         const pageList = [
-            "randomcolor",
-            "graphisizer",
-            "polystats",
-            "wordhunt"
+            { name: "randomcolor", description: "Generates random colors with names from colornames.org" },
+            { name: "graphisizer", description: "A tool for visualizing WCA results" },
+            { name: "polystats", description: "Displays stats and data for the game Polytrack" },
+            { name: "wordhunt", description: "A trainer for the gamepigeon word hunt game" },
         ];
 
         let scene, camera, renderer, controls;
         let starsGeometry, starsMaterial, starField;
-        const stars = []; // Array to hold individual star objects
+        const stars = []; // Array to hold individual star objects (Meshes)
         let raycaster;
         let mouse = new THREE.Vector2();
         let selectedStar = null;
@@ -184,17 +186,22 @@
 
         // --- Initialization ---
         function init() {
+            console.log("Initializing Three.js scene...");
             // Scene setup
             scene = new THREE.Scene();
 
             // Camera setup
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.z = 50; // Starting position
+            camera.lookAt(new THREE.Vector3(0, 0, 0)); // Ensure camera is looking at the center
+            console.log("Camera setup complete.");
 
             // Renderer setup
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 1); // Explicitly set background color to black
             document.getElementById('galaxy-container').appendChild(renderer.domElement);
+            console.log("Renderer setup complete.");
 
             // Orbit Controls
             controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -202,27 +209,34 @@
             controls.dampingFactor = 0.25;
             controls.screenSpacePanning = false;
             controls.maxPolarAngle = Math.PI / 2; // Prevent looking straight down
+            console.log("OrbitControls setup complete.");
 
             // Raycaster for interaction
             raycaster = new THREE.Raycaster();
+            console.log("Raycaster setup complete.");
 
             // Create the starfield background
             createStarfield();
+            console.log("Starfield created.");
 
             // Create stars for each page
             createPageStars();
+            console.log("Page stars created.");
 
             // Populate the page list in the HTML
             populatePageList();
+            console.log("Page list populated.");
 
             // Add event listeners
             window.addEventListener('resize', onWindowResize, false);
             window.addEventListener('mousemove', onMouseMove, false);
             window.addEventListener('click', onClick, false);
             searchInput.addEventListener('input', onSearchInput);
+            console.log("Event listeners added.");
 
             // Start the animation loop
             animate();
+            console.log("Animation loop started.");
         }
 
         // --- Create Starfield Background ---
@@ -270,7 +284,7 @@
             const numPages = pageList.length;
             const radius = 30; // Radius of the sphere where page stars are placed
 
-            pageList.forEach((pageName, index) => {
+            pageList.forEach((pageData, index) => {
                 // Position stars somewhat evenly on a sphere
                 const phi = Math.acos(-1 + (2 * index) / numPages);
                 const theta = Math.sqrt(numPages * Math.PI) * phi;
@@ -288,8 +302,8 @@
                 const star = new THREE.Mesh(starGeometry, starMaterial);
                 star.position.set(x, y, z);
 
-                // Attach the page name data to the star object
-                star.userData = { pageName: pageName, index: index };
+                // Attach the page data to the star object
+                star.userData = { page: pageData, index: index }; // Store the whole page object
 
                 scene.add(star);
                 stars.push(star);
@@ -297,14 +311,14 @@
         }
 
         // --- Populate HTML Page List ---
-        function populatePageList(filteredPageNames = pageList) {
+        function populatePageList(filteredPages = pageList) {
             pageListElement.innerHTML = ''; // Clear current list
 
-            filteredPageNames.forEach(pageName => {
+            filteredPages.forEach(pageData => {
                 const li = document.createElement('li');
-                li.textContent = pageName;
-                li.dataset.pageName = pageName; // Store page name for easy lookup
-                li.dataset.index = pageList.indexOf(pageName); // Store original index
+                li.textContent = pageData.name;
+                li.dataset.pageName = pageData.name; // Store page name for easy lookup
+                li.dataset.index = pageList.findIndex(p => p.name === pageData.name); // Store original index
                 li.addEventListener('click', handlePageListItemClick);
                 pageListElement.appendChild(li);
             });
@@ -313,15 +327,14 @@
         // --- Handle Page List Item Click ---
         function handlePageListItemClick(event) {
             const clickedPageName = event.target.dataset.pageName;
-            const index = parseInt(event.target.dataset.index);
 
             // Find the corresponding star
-            const star = stars.find(s => s.userData.pageName === clickedPageName);
+            const star = stars.find(s => s.userData.page.name === clickedPageName);
 
             if (star) {
                 selectStar(star);
-                // Optional: Navigate to the page (replace with your routing logic)
-                // window.location.href = `/${clickedPageName.toLowerCase().replace(/\s+/g, '-')}`;
+                 // Redirect to the page URL
+                window.location.href = `/${clickedPageName.toLowerCase().replace(/\s+/g, '-')}`;
             }
         }
 
@@ -339,8 +352,13 @@
                 star.rotation.y += 0.001;
             });
 
-            // Update Tween.js animations (for camera movement)
-            TWEEN.update();
+            // Update Tween.js animations (only if TWEEN is defined)
+            if (typeof TWEEN !== 'undefined') {
+                TWEEN.update();
+            } else {
+                // console.warn("TWEEN is not defined. Camera animations will not work.");
+            }
+
 
             renderer.render(scene, camera);
         }
@@ -366,7 +384,7 @@
             // Show info box on hover
             if (intersects.length > 0) {
                 const intersectedStar = intersects[0].object;
-                infoBox.textContent = intersectedStar.userData.pageName;
+                infoBox.innerHTML = `<strong>${intersectedStar.userData.page.name}</strong><br>${intersectedStar.userData.page.description}`; // Display name and description
                 infoBox.style.left = `${event.clientX + 15}px`;
                 infoBox.style.top = `${event.clientY + 15}px`;
                 infoBox.classList.add('visible');
@@ -390,8 +408,9 @@
                 const clickedStar = intersects[0].object;
                 selectStar(clickedStar);
 
-                // Optional: Navigate to the page (replace with your routing logic)
-                // window.location.href = `/${clickedStar.userData.pageName.toLowerCase().replace(/\s+/g, '-')}`;
+                // Redirect to the page URL
+                 window.location.href = `/${clickedStar.userData.page.name.toLowerCase().replace(/\s+/g, '-')}`;
+
 
             } else {
                 // If no star is clicked, deselect the current star
@@ -401,20 +420,23 @@
 
         function onSearchInput(event) {
             const searchTerm = event.target.value.toLowerCase();
-            const filteredPageNames = pageList.filter(pageName =>
-                pageName.toLowerCase().includes(searchTerm)
+            // Filter based on name or description
+            const filteredPages = pageList.filter(pageData =>
+                pageData.name.toLowerCase().includes(searchTerm) ||
+                pageData.description.toLowerCase().includes(searchTerm)
             );
-            populatePageList(filteredPageNames);
+            populatePageList(filteredPages);
 
             // Highlight stars that match the search term
             stars.forEach(star => {
-                const pageName = star.userData.pageName.toLowerCase();
-                const isMatch = pageName.includes(searchTerm);
+                const pageName = star.userData.page.name.toLowerCase();
+                const pageDescription = star.userData.page.description.toLowerCase();
+                const isMatch = pageName.includes(searchTerm) || pageDescription.includes(searchTerm);
                 star.material.color.set(isMatch ? 0xffff00 : 0x00b4ff); // Highlight yellow, default blue
             });
 
             // Deselect any currently selected star if it doesn't match the search
-            if (selectedStar && !selectedStar.userData.pageName.toLowerCase().includes(searchTerm)) {
+            if (selectedStar && !(selectedStar.userData.page.name.toLowerCase().includes(searchTerm) || selectedStar.userData.page.description.toLowerCase().includes(searchTerm))) {
                 deselectStar();
             }
         }
@@ -425,7 +447,7 @@
             if (selectedStar) {
                 selectedStar.material.color.set(0x00b4ff); // Reset color
                  // Remove 'selected' class from previous list item
-                const prevListItem = pageListElement.querySelector(`li[data-page-name="${selectedStar.userData.pageName}"]`);
+                const prevListItem = pageListElement.querySelector(`li[data-page-name="${selectedStar.userData.page.name}"]`);
                 if (prevListItem) {
                     prevListItem.classList.remove('selected');
                 }
@@ -436,7 +458,7 @@
             selectedStar.material.color.set(0xff00ff); // Highlight color (e.g., magenta)
 
             // Add 'selected' class to the corresponding list item
-            const listItem = pageListElement.querySelector(`li[data-page-name="${star.userData.pageName}"]`);
+            const listItem = pageListElement.querySelector(`li[data-page-name="${star.userData.page.name}"]`);
             if (listItem) {
                 listItem.classList.add('selected');
                 // Scroll the list to make the selected item visible
@@ -444,45 +466,49 @@
             }
 
 
-            // Animate camera to focus on the selected star
-            targetPosition.copy(selectedStar.position).add(new THREE.Vector3(5, 5, 5)); // Offset slightly
-             // Keep the camera looking at the star's position
-            const lookAtPosition = selectedStar.position.clone();
+            // Animate camera to focus on the selected star (only if TWEEN is defined)
+            if (typeof TWEEN !== 'undefined') {
+                targetPosition.copy(selectedStar.position).add(new THREE.Vector3(5, 5, 5)); // Offset slightly
+                 // Keep the camera looking at the star's position
+                const lookAtPosition = selectedStar.position.clone();
 
 
-            // Disable controls during animation
-            controls.enabled = false;
-            isAnimatingCamera = true;
+                // Disable controls during animation
+                controls.enabled = false;
+                isAnimatingCamera = true;
 
-            new TWEEN.Tween(camera.position)
-                .to(targetPosition, 1000) // Animation duration in milliseconds
-                .easing(TWEEN.Easing.Quadratic.InOut)
-                .onUpdate(() => {
-                    // Continuously look at the star during the animation
-                     camera.lookAt(lookAtPosition);
-                })
-                .onComplete(() => {
-                    // Re-enable controls after animation
-                    controls.enabled = true;
-                    isAnimatingCamera = false;
-                     // Ensure camera is looking at the star at the end
-                    camera.lookAt(lookAtPosition);
-                })
-                .start();
+                new TWEEN.Tween(camera.position)
+                    .to(targetPosition, 1000) // Animation duration in milliseconds
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onUpdate(() => {
+                        // Continuously look at the star during the animation
+                         camera.lookAt(lookAtPosition);
+                    })
+                    .onComplete(() => {
+                        // Re-enable controls after animation
+                        controls.enabled = true;
+                        isAnimatingCamera = false;
+                         // Ensure camera is looking at the star at the end
+                        camera.lookAt(lookAtPosition);
+                    })
+                    .start();
+            } else {
+                 console.warn("TWEEN is not defined. Camera animation to selected star skipped.");
+            }
         }
 
         function deselectStar() {
             if (selectedStar) {
                 selectedStar.material.color.set(0x00b4ff); // Reset color
                  // Remove 'selected' class from the list item
-                const listItem = pageListElement.querySelector(`li[data-page-name="${selectedStar.userData.pageName}"]`);
+                const listItem = pageListElement.querySelector(`li[data-page-name="${selectedStar.userData.page.name}"]`);
                 if (listItem) {
                     listItem.classList.remove('selected');
                 }
                 selectedStar = null;
 
-                 // Animate camera back to a default view or allow controls to take over
-                if (!isAnimatingCamera) {
+                 // Animate camera back to a default view or allow controls to take over (only if TWEEN is defined)
+                if (!isAnimatingCamera && typeof TWEEN !== 'undefined') {
                     // Example: Animate back to initial position or a wider view
                      new TWEEN.Tween(camera.position)
                         .to(new THREE.Vector3(0, 0, 50), 1000) // Animate back to initial z=50
@@ -492,6 +518,8 @@
                              camera.lookAt(new THREE.Vector3(0, 0, 0));
                          })
                         .start();
+                } else if (!isAnimatingCamera) {
+                     console.warn("TWEEN is not defined. Camera animation on deselect skipped.");
                 }
             }
         }
