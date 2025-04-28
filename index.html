@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
+    <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-QC9TD3HHM3"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -40,6 +40,11 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            transition: opacity 0.5s ease;
+        }
+        #overlay.hidden {
+            opacity: 0;
+            pointer-events: none; /* Disable interaction when hidden */
         }
         #content {
             background: rgba(0, 0, 0, 0.6);
@@ -118,7 +123,7 @@
             box-shadow: 0 0 8px rgba(0, 180, 255, 0.6);
         }
 
-        /* Style for the info box */
+        /* Style for the info box (hover details) */
         #info-box {
             position: absolute;
             top: 10px;
@@ -137,6 +142,75 @@
         }
          #info-box.visible {
             opacity: 1;
+        }
+
+        /* Style for the selected star details overlay */
+        #selected-star-details {
+            position: fixed;
+            top: 50%;
+            right: 20px; /* Position on the right side */
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 0 20px rgba(0, 180, 255, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2; /* Above the main overlay if it's still visible */
+            opacity: 0;
+            pointer-events: none; /* Initially not interactive */
+            transition: opacity 0.5s ease;
+            text-align: left;
+        }
+        #selected-star-details.visible {
+            opacity: 1;
+            pointer-events: auto; /* Enable interaction when visible */
+        }
+        #selected-star-details h2 {
+            font-size: 2em;
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #00b4ff;
+            text-shadow: 0 0 8px rgba(0, 180, 255, 0.6);
+        }
+        #selected-star-details p {
+            font-size: 1em;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            color: #ccc;
+        }
+        #travel-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #00b4ff, #0077cc);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 180, 255, 0.4);
+        }
+        #travel-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 180, 255, 0.6);
+        }
+         #close-details-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        #close-details-button:hover {
+            color: #fff;
         }
     </style>
 </head>
@@ -158,6 +232,14 @@
 
     <div id="info-box"></div>
 
+    <div id="selected-star-details">
+        <button id="close-details-button">&times;</button>
+        <h2 id="details-page-name"></h2>
+        <p id="details-page-description"></p>
+        <button id="travel-button">Travel to Page</button>
+    </div>
+
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/tween.min.js"></script>
@@ -165,7 +247,7 @@
     <script>
         // List of your project pages (replace with your actual page names and descriptions)
         const pageList = [
-            { name: "randomcolor", description: "Generates random colors with names from colornames.org" },
+            { name: "randomcolor", description: "Generates random colors with their names from colornames.org" },
             { name: "graphisizer", description: "A tool for visualizing WCA results" },
             { name: "polystats", description: "Displays stats and data for the game Polytrack" },
             { name: "wordhunt", description: "A trainer for the gamepigeon word hunt game" },
@@ -180,9 +262,16 @@
         let targetPosition = new THREE.Vector3();
         let isAnimatingCamera = false;
 
+        const overlayElement = document.getElementById('overlay');
         const infoBox = document.getElementById('info-box');
         const pageListElement = document.getElementById('page-list');
         const searchInput = document.getElementById('search-input');
+        const selectedStarDetailsElement = document.getElementById('selected-star-details');
+        const detailsPageNameElement = document.getElementById('details-page-name');
+        const detailsPageDescriptionElement = document.getElementById('details-page-description');
+        const travelButton = document.getElementById('travel-button');
+        const closeDetailsButton = document.getElementById('close-details-button');
+
 
         // --- Initialization ---
         function init() {
@@ -232,7 +321,8 @@
             window.addEventListener('mousemove', onMouseMove, false);
             window.addEventListener('click', onClick, false);
             searchInput.addEventListener('input', onSearchInput);
-            console.log("Event listeners added.");
+            closeDetailsButton.addEventListener('click', deselectStar); // Close button for details
+
 
             // Start the animation loop
             animate();
@@ -293,20 +383,32 @@
                 const y = radius * Math.sin(phi) * Math.sin(theta);
                 const z = radius * Math.cos(phi);
 
-                // Create a sphere geometry for the star
+                // Create a group to hold the star and its glow effect
+                const starGroup = new THREE.Group();
+                starGroup.position.set(x, y, z);
+
+                // Main star sphere
                 const starGeometry = new THREE.SphereGeometry(0.8, 16, 16); // Size and detail
-
-                // Create a material with a glowing effect (using a basic material for simplicity)
                 const starMaterial = new THREE.MeshBasicMaterial({ color: 0x00b4ff }); // Bright blue
+                const starMesh = new THREE.Mesh(starGeometry, starMaterial);
+                starGroup.add(starMesh); // Add mesh to the group
 
-                const star = new THREE.Mesh(starGeometry, starMaterial);
-                star.position.set(x, y, z);
+                // Glow effect (larger, semi-transparent sphere)
+                const glowGeometry = new THREE.SphereGeometry(1.5, 16, 16); // Slightly larger
+                const glowMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x00b4ff,
+                    transparent: true,
+                    opacity: 0.2, // Semi-transparent
+                    side: THREE.BackSide // Render on the inside
+                });
+                const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+                starGroup.add(glowMesh); // Add glow to the group
 
-                // Attach the page data to the star object
-                star.userData = { page: pageData, index: index }; // Store the whole page object
+                // Attach the page data to the group
+                starGroup.userData = { page: pageData, index: index, isPageStar: true }; // Add flag to identify page stars
 
-                scene.add(star);
-                stars.push(star);
+                scene.add(starGroup);
+                stars.push(starGroup); // Add the group to the stars array
             });
         }
 
@@ -328,13 +430,11 @@
         function handlePageListItemClick(event) {
             const clickedPageName = event.target.dataset.pageName;
 
-            // Find the corresponding star
-            const star = stars.find(s => s.userData.page.name === clickedPageName);
+            // Find the corresponding star group
+            const starGroup = stars.find(s => s.userData.isPageStar && s.userData.page.name === clickedPageName);
 
-            if (star) {
-                selectStar(star);
-                 // Redirect to the page URL
-                window.location.href = `/${clickedPageName.toLowerCase().replace(/\s+/g, '-')}`;
+            if (starGroup) {
+                selectStar(starGroup);
             }
         }
 
@@ -346,17 +446,18 @@
             // Update controls
             controls.update();
 
-            // Animate stars (subtle rotation or scaling)
-            stars.forEach(star => {
-                star.rotation.x += 0.001;
-                star.rotation.y += 0.001;
+            // Animate stars (subtle rotation or scaling) - now animating the group
+            stars.forEach(starGroup => {
+                 if (starGroup.userData.isPageStar) {
+                    starGroup.rotation.y += 0.002; // Rotate the group
+                 }
             });
 
             // Update Tween.js animations (only if TWEEN is defined)
             if (typeof TWEEN !== 'undefined') {
                 TWEEN.update();
             } else {
-                // console.warn("TWEEN is not defined. Camera animations will not work.");
+                 // console.warn("TWEEN is not defined. Camera animations will not work.");
             }
 
 
@@ -378,13 +479,15 @@
             // Update the raycaster with the camera and mouse position
             raycaster.setFromCamera(mouse, camera);
 
-            // Find intersecting objects (only check the page stars)
-            const intersects = raycaster.intersectObjects(stars);
+            // Find intersecting objects (only check the page star meshes within the groups)
+            const intersectableObjects = stars.map(group => group.children[0]); // Get the main star mesh from each group
+            const intersects = raycaster.intersectObjects(intersectableObjects);
 
             // Show info box on hover
             if (intersects.length > 0) {
-                const intersectedStar = intersects[0].object;
-                infoBox.innerHTML = `<strong>${intersectedStar.userData.page.name}</strong><br>${intersectedStar.userData.page.description}`; // Display name and description
+                const intersectedMesh = intersects[0].object;
+                const intersectedStarGroup = intersectedMesh.parent; // Get the parent group
+                infoBox.innerHTML = `<strong>${intersectedStarGroup.userData.page.name}</strong><br>${intersectedStarGroup.userData.page.description}`; // Display name and description
                 infoBox.style.left = `${event.clientX + 15}px`;
                 infoBox.style.top = `${event.clientY + 15}px`;
                 infoBox.classList.add('visible');
@@ -394,6 +497,11 @@
         }
 
         function onClick(event) {
+             // If the details panel is visible, don't process clicks in the 3D scene
+            if (selectedStarDetailsElement.classList.contains('visible')) {
+                return;
+            }
+
             // Calculate mouse position in normalized device coordinates (-1 to +1)
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -401,16 +509,15 @@
             // Update the raycaster with the camera and mouse position
             raycaster.setFromCamera(mouse, camera);
 
-            // Find intersecting objects (only check the page stars)
-            const intersects = raycaster.intersectObjects(stars);
+             // Find intersecting objects (only check the page star meshes within the groups)
+            const intersectableObjects = stars.map(group => group.children[0]); // Get the main star mesh from each group
+            const intersects = raycaster.intersectObjects(intersectableObjects);
+
 
             if (intersects.length > 0) {
-                const clickedStar = intersects[0].object;
-                selectStar(clickedStar);
-
-                // Redirect to the page URL
-                 window.location.href = `/${clickedStar.userData.page.name.toLowerCase().replace(/\s+/g, '-')}`;
-
+                const clickedMesh = intersects[0].object;
+                const clickedStarGroup = clickedMesh.parent; // Get the parent group
+                selectStar(clickedStarGroup);
 
             } else {
                 // If no star is clicked, deselect the current star
@@ -428,11 +535,14 @@
             populatePageList(filteredPages);
 
             // Highlight stars that match the search term
-            stars.forEach(star => {
-                const pageName = star.userData.page.name.toLowerCase();
-                const pageDescription = star.userData.page.description.toLowerCase();
-                const isMatch = pageName.includes(searchTerm) || pageDescription.includes(searchTerm);
-                star.material.color.set(isMatch ? 0xffff00 : 0x00b4ff); // Highlight yellow, default blue
+            stars.forEach(starGroup => {
+                 if (starGroup.userData.isPageStar) {
+                    const pageName = starGroup.userData.page.name.toLowerCase();
+                    const pageDescription = starGroup.userData.page.description.toLowerCase();
+                    const isMatch = pageName.includes(searchTerm) || pageDescription.includes(searchTerm);
+                    // Highlight the main star mesh
+                    starGroup.children[0].material.color.set(isMatch ? 0xffff00 : 0x00b4ff); // Highlight yellow, default blue
+                 }
             });
 
             // Deselect any currently selected star if it doesn't match the search
@@ -442,10 +552,10 @@
         }
 
         // --- Star Selection Logic ---
-        function selectStar(star) {
+        function selectStar(starGroup) {
             // Deselect previous star if any
             if (selectedStar) {
-                selectedStar.material.color.set(0x00b4ff); // Reset color
+                selectedStar.children[0].material.color.set(0x00b4ff); // Reset main star color
                  // Remove 'selected' class from previous list item
                 const prevListItem = pageListElement.querySelector(`li[data-page-name="${selectedStar.userData.page.name}"]`);
                 if (prevListItem) {
@@ -453,23 +563,41 @@
                 }
             }
 
-            // Select the new star
-            selectedStar = star;
-            selectedStar.material.color.set(0xff00ff); // Highlight color (e.g., magenta)
+            // Select the new star group
+            selectedStar = starGroup;
+            selectedStar.children[0].material.color.set(0xff00ff); // Highlight main star color (e.g., magenta)
 
             // Add 'selected' class to the corresponding list item
-            const listItem = pageListElement.querySelector(`li[data-page-name="${star.userData.page.name}"]`);
+            const listItem = pageListElement.querySelector(`li[data-page-name="${starGroup.userData.page.name}"]`);
             if (listItem) {
                 listItem.classList.add('selected');
                 // Scroll the list to make the selected item visible
                 listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
 
+            // Hide the main overlay
+            overlayElement.classList.add('hidden');
+
+            // Populate and show the selected star details overlay
+            detailsPageNameElement.textContent = starGroup.userData.page.name;
+            detailsPageDescriptionElement.textContent = starGroup.userData.page.description;
+            // Update travel button text and URL
+            travelButton.textContent = `Travel to ${starGroup.userData.page.name}`;
+            travelButton.onclick = () => {
+                 window.location.href = `/${starGroup.userData.page.name.toLowerCase().replace(/\s+/g, '-')}`;
+            };
+            selectedStarDetailsElement.classList.add('visible');
+
 
             // Animate camera to focus on the selected star (only if TWEEN is defined)
             if (typeof TWEEN !== 'undefined') {
-                targetPosition.copy(selectedStar.position).add(new THREE.Vector3(5, 5, 5)); // Offset slightly
-                 // Keep the camera looking at the star's position
+                // Calculate target position to center the star and leave space for the details panel
+                // This is a simplified approach; might need adjustment based on screen size and panel width
+                const offset = new THREE.Vector3(-15, 0, 10); // Offset to the left and slightly forward
+                targetPosition.copy(selectedStar.position).add(offset);
+
+
+                // Keep the camera looking at the star's position
                 const lookAtPosition = selectedStar.position.clone();
 
 
@@ -494,18 +622,30 @@
                     .start();
             } else {
                  console.warn("TWEEN is not defined. Camera animation to selected star skipped.");
+                 // If TWEEN is not available, just set the camera position directly
+                 const offset = new THREE.Vector3(-15, 0, 10);
+                 camera.position.copy(selectedStar.position).add(offset);
+                 camera.lookAt(selectedStar.position);
+                 controls.target.copy(selectedStar.position); // Update controls target as well
             }
         }
 
         function deselectStar() {
             if (selectedStar) {
-                selectedStar.material.color.set(0x00b4ff); // Reset color
+                selectedStar.children[0].material.color.set(0x00b4ff); // Reset main star color
                  // Remove 'selected' class from the list item
                 const listItem = pageListElement.querySelector(`li[data-page-name="${selectedStar.userData.page.name}"]`);
                 if (listItem) {
                     listItem.classList.remove('selected');
                 }
                 selectedStar = null;
+
+                // Hide the selected star details overlay
+                selectedStarDetailsElement.classList.remove('visible');
+
+                // Show the main overlay
+                overlayElement.classList.remove('hidden');
+
 
                  // Animate camera back to a default view or allow controls to take over (only if TWEEN is defined)
                 if (!isAnimatingCamera && typeof TWEEN !== 'undefined') {
@@ -516,10 +656,15 @@
                          .onComplete(() => {
                              // Ensure camera is looking towards the center
                              camera.lookAt(new THREE.Vector3(0, 0, 0));
+                             controls.target.copy(new THREE.Vector3(0, 0, 0)); // Reset controls target
                          })
                         .start();
                 } else if (!isAnimatingCamera) {
                      console.warn("TWEEN is not defined. Camera animation on deselect skipped.");
+                     // If TWEEN is not available, just reset camera position and lookAt
+                     camera.position.set(0, 0, 50);
+                     camera.lookAt(new THREE.Vector3(0, 0, 0));
+                     controls.target.copy(new THREE.Vector3(0, 0, 0));
                 }
             }
         }
