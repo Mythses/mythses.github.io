@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-QC9TD3HHM3"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QC9TD3HHM3"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -12,7 +11,7 @@
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Project Galaxy</title>
+    <title>Project Galaxy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -174,6 +173,12 @@
             color: #00b4ff;
             text-shadow: 0 0 8px rgba(0, 180, 255, 0.6);
         }
+         #selected-star-details h3 {
+            font-size: 1.2em;
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #00b4ff;
+        }
         #selected-star-details p {
             font-size: 1em;
             margin-bottom: 20px;
@@ -218,7 +223,7 @@
     <div id="galaxy-container"></div>
     <div id="overlay">
         <div id="content">
-            <h1>Welcome to My Project Galaxy</h1>
+            <h1>Welcome to the Glaxay</h1>
             <p>Explore the stars, each representing a different project!</p>
             <div id="search-container">
                 <input type="text" id="search-input" placeholder="Search projects...">
@@ -235,6 +240,7 @@
     <div id="selected-star-details">
         <button id="close-details-button">&times;</button>
         <h2 id="details-page-name"></h2>
+        <h3 id="details-page-version"></h3>
         <p id="details-page-description"></p>
         <button id="travel-button">Travel to Page</button>
     </div>
@@ -245,12 +251,12 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/tween.min.js"></script>
 
     <script>
-        // List of your project pages (replace with your actual page names and descriptions)
+        // List of your project pages (replace with your actual page names, descriptions, and versions)
         const pageList = [
-            { name: "randomcolor", description: "Generates random colors with their names from colornames.org" },
-            { name: "graphisizer", description: "A tool for visualizing WCA results" },
-            { name: "polystats", description: "Displays stats and data for the game Polytrack" },
-            { name: "wordhunt", description: "A trainer for the gamepigeon word hunt game" },
+            { name: "randomcolor", version: "v1.0", description: "Generates random colors with their names from colornames.org" },
+            { name: "graphisizer", version: "v2.0", description: "A tool for visualizing WCA results" },
+            { name: "polystats", version: "alpha 3", description: "Displays stats and data for the game Polytrack" },
+            { name: "wordhunt", version: "alpha 1", description: "A trainer for the gamepigeon word hunt game" },
         ];
 
         let scene, camera, renderer, controls;
@@ -258,9 +264,11 @@
         const stars = []; // Array to hold individual star objects (Meshes)
         let raycaster;
         let mouse = new THREE.Vector2();
+        let mousePosition = { x: 0, y: 0 }; // To track global mouse position for UI check
         let selectedStar = null;
         let targetPosition = new THREE.Vector3();
         let isAnimatingCamera = false;
+        let isMouseOverOverlay = false; // Flag to check if mouse is over any UI overlay
 
         const overlayElement = document.getElementById('overlay');
         const infoBox = document.getElementById('info-box');
@@ -268,6 +276,7 @@
         const searchInput = document.getElementById('search-input');
         const selectedStarDetailsElement = document.getElementById('selected-star-details');
         const detailsPageNameElement = document.getElementById('details-page-name');
+        const detailsPageVersionElement = document.getElementById('details-page-version'); // Element for version
         const detailsPageDescriptionElement = document.getElementById('details-page-description');
         const travelButton = document.getElementById('travel-button');
         const closeDetailsButton = document.getElementById('close-details-button');
@@ -298,6 +307,9 @@
             controls.dampingFactor = 0.25;
             controls.screenSpacePanning = false;
             controls.maxPolarAngle = Math.PI / 2; // Prevent looking straight down
+            controls.enableZoom = true; // Enable zoom
+            controls.minDistance = 5; // Minimum zoom distance
+            controls.maxDistance = 100; // Maximum zoom distance
             console.log("OrbitControls setup complete.");
 
             // Raycaster for interaction
@@ -322,6 +334,15 @@
             window.addEventListener('click', onClick, false);
             searchInput.addEventListener('input', onSearchInput);
             closeDetailsButton.addEventListener('click', deselectStar); // Close button for details
+
+            // Add mouse enter/leave listeners for UI elements to control zoom
+            overlayElement.addEventListener('mouseenter', () => isMouseOverOverlay = true);
+            overlayElement.addEventListener('mouseleave', () => isMouseOverOverlay = false);
+            selectedStarDetailsElement.addEventListener('mouseenter', () => isMouseOverOverlay = true);
+            selectedStarDetailsElement.addEventListener('mouseleave', () => isMouseOverOverlay = false);
+
+             // Prevent default scroll behavior when mouse is over UI elements
+            window.addEventListener('wheel', onMouseWheel, { passive: false });
 
 
             // Start the animation loop
@@ -418,7 +439,7 @@
 
             filteredPages.forEach(pageData => {
                 const li = document.createElement('li');
-                li.textContent = pageData.name;
+                li.textContent = `${pageData.name} (v${pageData.version})`; // Display name and version
                 li.dataset.pageName = pageData.name; // Store page name for easy lookup
                 li.dataset.index = pageList.findIndex(p => p.name === pageData.name); // Store original index
                 li.addEventListener('click', handlePageListItemClick);
@@ -472,9 +493,14 @@
         }
 
         function onMouseMove(event) {
-            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            // Calculate mouse position in normalized device coordinates (-1 to +1) for raycaster
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Store global mouse position for UI check
+            mousePosition.x = event.clientX;
+            mousePosition.y = event.clientY;
+
 
             // Update the raycaster with the camera and mouse position
             raycaster.setFromCamera(mouse, camera);
@@ -487,7 +513,7 @@
             if (intersects.length > 0) {
                 const intersectedMesh = intersects[0].object;
                 const intersectedStarGroup = intersectedMesh.parent; // Get the parent group
-                infoBox.innerHTML = `<strong>${intersectedStarGroup.userData.page.name}</strong><br>${intersectedStarGroup.userData.page.description}`; // Display name and description
+                infoBox.innerHTML = `<strong>${intersectedStarGroup.userData.page.name} (v${intersectedStarGroup.userData.page.version})</strong><br>${intersectedStarGroup.userData.page.description}`; // Display name, version, and description
                 infoBox.style.left = `${event.clientX + 15}px`;
                 infoBox.style.top = `${event.clientY + 15}px`;
                 infoBox.classList.add('visible');
@@ -525,29 +551,57 @@
             }
         }
 
+         // --- Mouse Wheel Handler for Conditional Zoom ---
+        function onMouseWheel(event) {
+            // Check if the mouse is currently over the main overlay or the details overlay
+            const overlayRect = overlayElement.getBoundingClientRect();
+            const detailsRect = selectedStarDetailsElement.getBoundingClientRect();
+
+            const isOverOverlay = mousePosition.x > overlayRect.left && mousePosition.x < overlayRect.right &&
+                                 mousePosition.y > overlayRect.top && mousePosition.y < overlayRect.bottom;
+
+            const isOverDetails = mousePosition.x > detailsRect.left && mousePosition.x < detailsRect.right &&
+                                  mousePosition.y > detailsRect.top && mousePosition.y < detailsRect.bottom;
+
+            if (isOverOverlay || isOverDetails) {
+                // Prevent default scroll behavior if mouse is over a UI element
+                event.preventDefault();
+            }
+            // If not over a UI element, OrbitControls will handle the zoom
+        }
+
+
         function onSearchInput(event) {
             const searchTerm = event.target.value.toLowerCase();
             // Filter based on name or description
             const filteredPages = pageList.filter(pageData =>
                 pageData.name.toLowerCase().includes(searchTerm) ||
-                pageData.description.toLowerCase().includes(searchTerm)
+                pageData.description.toLowerCase().includes(searchTerm) ||
+                pageData.version.toLowerCase().includes(searchTerm) // Include version in search
             );
             populatePageList(filteredPages);
 
             // Highlight stars that match the search term
             stars.forEach(starGroup => {
                  if (starGroup.userData.isPageStar) {
-                    const pageName = starGroup.userData.page.name.toLowerCase();
-                    const pageDescription = starGroup.userData.page.description.toLowerCase();
-                    const isMatch = pageName.includes(searchTerm) || pageDescription.includes(searchTerm);
+                    const pageData = starGroup.userData.page;
+                    const isMatch = pageData.name.toLowerCase().includes(searchTerm) ||
+                                    pageData.description.toLowerCase().includes(searchTerm) ||
+                                    pageData.version.toLowerCase().includes(searchTerm);
                     // Highlight the main star mesh
                     starGroup.children[0].material.color.set(isMatch ? 0xffff00 : 0x00b4ff); // Highlight yellow, default blue
                  }
             });
 
             // Deselect any currently selected star if it doesn't match the search
-            if (selectedStar && !(selectedStar.userData.page.name.toLowerCase().includes(searchTerm) || selectedStar.userData.page.description.toLowerCase().includes(searchTerm))) {
-                deselectStar();
+            if (selectedStar) {
+                const selectedPageData = selectedStar.userData.page;
+                 const isSelectedMatch = selectedPageData.name.toLowerCase().includes(searchTerm) ||
+                                         selectedPageData.description.toLowerCase().includes(searchTerm) ||
+                                         selectedPageData.version.toLowerCase().includes(searchTerm);
+                if (!isSelectedMatch) {
+                    deselectStar();
+                }
             }
         }
 
@@ -580,6 +634,7 @@
 
             // Populate and show the selected star details overlay
             detailsPageNameElement.textContent = starGroup.userData.page.name;
+            detailsPageVersionElement.textContent = `Version: ${starGroup.userData.page.version}`; // Display version
             detailsPageDescriptionElement.textContent = starGroup.userData.page.description;
             // Update travel button text and URL
             travelButton.textContent = `Travel to ${starGroup.userData.page.name}`;
@@ -618,6 +673,8 @@
                         isAnimatingCamera = false;
                          // Ensure camera is looking at the star at the end
                         camera.lookAt(lookAtPosition);
+                         // Update controls target to the star's position after animation
+                        controls.target.copy(selectedStar.position);
                     })
                     .start();
             } else {
@@ -668,6 +725,13 @@
                 }
             }
         }
+
+        // --- Check if mouse is within a rectangle ---
+        function isMouseInRect(mouseX, mouseY, rect) {
+            return mouseX > rect.left && mouseX < rect.right &&
+                   mouseY > rect.top && mouseY < rect.bottom;
+        }
+
 
         // --- Initialize the scene when the window loads ---
         window.onload = init;
