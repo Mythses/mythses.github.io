@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QC9TD3HHM3"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QC9TD3HHM3"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -11,875 +11,1406 @@
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Galaxy</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <title>My Projects - Star System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
         body {
             margin: 0;
-            overflow: hidden;
+            overflow: hidden; /* Hide scrollbars */
             font-family: 'Inter', sans-serif;
-            background-color: #000;
+            background-color: #000; /* Black background for space */
+            color: #fff; /* White text */
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Custom Scrollbar Styles (for Webkit browsers) */
+        /* Target the scrollbar itself */
+        ::-webkit-scrollbar {
+            width: 10px; /* Width of the scrollbar */
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            background: rgba(10, 0, 20, 0.3); /* Transparent dark purple track */
+            border-radius: 10px;
+        }
+
+        /* Handle (Thumb) */
+        ::-webkit-scrollbar-thumb {
+            background: rgba(150, 50, 200, 0.6); /* Transparent purple thumb */
+            border-radius: 10px;
+            border: 1px solid rgba(150, 50, 200, 0.8); /* Subtle border */
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(150, 50, 200, 0.8); /* More opaque purple on hover */
+        }
+
+
+        #tooltip {
+            position: absolute;
+            background-color: rgba(10, 0, 20, 0.6); /* Very dark transparent with purple hint */
             color: #fff;
+            padding: 12px 18px; /* Slightly more padding */
+            border-radius: 12px; /* Match search/menu rounded corners */
+            pointer-events: none; /* Allows mouse events to pass through to canvas */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 10;
+            max-width: 280px; /* Increased max width */
+            box-shadow: 0 6px 15px rgba(50, 0, 80, 0.4); /* Subtle purple shadow */
+            line-height: 1.6; /* Improved readability */
+            font-size: 1em; /* Slightly larger font for tooltip */
+            border: 1px solid rgba(150, 50, 200, 0.3); /* Subtle purple border */
         }
-        #galaxy-container {
-            position: fixed;
-            top: 0;
-            left: 0;
+        #tooltip.visible {
+            opacity: 1;
+        }
+        #tooltip strong {
+            color: #a78bfa; /* Tailwind violet-400 for accent */
+            font-weight: 700;
+        }
+
+        /* Floating Menu Styles */
+        #side-menu {
+            position: absolute; /* Change to absolute for floating */
+            bottom: 20px; /* Position from the bottom */
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%) scale(0.9); /* Initial scale and centering */
+            width: 350px; /* Fixed width */
+            max-height: 400px; /* Max height with scrolling */
+            background-color: rgba(10, 0, 20, 0.6); /* Very dark transparent with purple hint */
+            color: #fff;
+            padding: 20px 25px; /* Padding */
+            box-shadow: 0 8px 25px rgba(50, 0, 80, 0.5); /* Purple shadow */
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; /* Transition for fade/scale */
+            z-index: 20;
+            overflow-y: auto; /* Allow scrolling if content is long */
+            border-radius: 15px; /* Rounded corners on all sides */
+            border: 1px solid rgba(150, 50, 200, 0.3); /* Subtle purple border */
+            opacity: 0; /* Hidden by default */
+            pointer-events: none; /* Don't block clicks when hidden */
+        }
+        #side-menu.open {
+            opacity: 1; /* Make visible */
+            pointer-events: auto; /* Enable clicks when visible */
+            transform: translateX(-50%) scale(1); /* Scale up to normal size */
+        }
+        #side-menu h2 {
+            font-size: 1.8em; /* Heading size */
+            margin-bottom: 15px; /* Margin below heading */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+            padding-bottom: 10px; /* Padding below border */
+            color: #a78bfa; /* Tailwind violet-400 for accent */
+            font-weight: 700;
+        }
+        #side-menu p {
+            margin-bottom: 12px; /* Margin below paragraphs */
+            line-height: 1.6; /* Improved readability */
+            font-size: 1em; /* Text size */
+        }
+        #side-menu strong {
+             color: rgba(255, 255, 255, 0.9); /* Slightly brighter label text */
+             font-weight: 600;
+        }
+        #side-menu a {
+            color: #c4b5fd; /* Tailwind violet-300 for links */
+            text-decoration: none;
+            transition: color 0.2s ease-in-out;
+        }
+        #side-menu a:hover {
+            color: #ddd6fe; /* Tailwind violet-200 on hover */
+            text-decoration: underline;
+        }
+        #close-menu {
+            position: absolute;
+            top: 10px; /* Position from top of menu */
+            right: 10px; /* Position from right of menu */
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.8); /* Subtle color */
+            font-size: 1.8em; /* Close button size */
+            cursor: pointer;
+            transition: color 0.2s ease-in-out;
+        }
+        #close-menu:hover {
+            color: #fff; /* White on hover */
+        }
+        #travel-button {
+            display: block;
             width: 100%;
-            height: 100%;
-            z-index: -1; /* Ensure it's behind other content */
+            padding: 14px; /* Padding */
+            background-color: rgba(147, 51, 234, 0.7); /* Transparent purple-600 */
+            color: white;
+            border: 1px solid rgba(150, 50, 200, 0.5); /* Subtle purple border */
+            border-radius: 10px; /* Rounded corners */
+            cursor: pointer;
+            font-size: 1.2em; /* Font size */
+            margin-top: 20px; /* Margin above button */
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 4px 10px rgba(50, 0, 80, 0.3); /* Subtle purple shadow */
+            font-weight: 600;
         }
-        #overlay {
-            position: relative;
-            z-index: 1;
-            padding: 20px;
+        #travel-button:hover {
+            background-color: rgba(126, 34, 206, 0.8); /* Darker purple on hover */
+            box-shadow: 0 6px 12px rgba(50, 0, 80, 0.4); /* More prominent shadow on hover */
+        }
+        #travel-button:active {
+             background-color: rgba(109, 40, 184, 0.9); /* Even darker red on active */
+             box-shadow: 0 2px 5px rgba(50, 0, 80, 0.5);
+        }
+
+
+        /* --- Revamped Search Bar Styling --- */
+        #search-container {
+            position: fixed; /* Use fixed to keep it in the viewport */
+            top: 40px; /* Increased space from the top */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%; /* Use a larger percentage for responsiveness */
+            max-width: 600px; /* Increased max width */
+            background-color: rgba(10, 0, 20, 0.6); /* Very dark transparent with purple hint */
+            padding: 0px 0px; /* Increased padding */
+            z-index: 30;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            transition: opacity 0.5s ease;
+            overflow: hidden;
+            max-height: 70px; /* Adjusted initial collapsed height */
+            transition: max-height 0.5s ease-in-out, box-shadow 0.5s ease-in-out, background-color 0.3s ease-in-out; /* Smoother transition */
+            border-radius: 30px; /* More rounded corners on all sides */
+            box-shadow: 0 6px 15px rgba(50, 0, 80, 0.4); /* Subtle purple shadow even when collapsed */
+            border: 1px solid rgba(150, 50, 200, 0.3); /* Subtle purple border */
         }
-        #overlay.hidden {
-            opacity: 0;
-            pointer-events: none; /* Disable interaction when hidden */
+         #search-container.expanded {
+            max-height: 90vh; /* Increased expanded height to prevent cutoff */
+            overflow-y: auto; /* Add scroll if content exceeds max height */
+            background-color: rgba(10, 0, 20, 0.8); /* Slightly less transparent when expanded */
+            box-shadow: 0 15px 40px rgba(50, 0, 80, 0.6); /* More prominent purple shadow when open */
+         }
+
+        #search-input-wrapper {
+            position: relative; /* Needed for positioning the clear button */
+            width: 100%;
+            margin-bottom: 0; /* Remove bottom margin when collapsed */
+            transition: margin-bottom 0.5s ease-in-out; /* Transition margin */
         }
-        #content {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            max-width: 600px;
-            width: 95%;
-            box-shadow: 0 0 20px rgba(0, 180, 255, 0.5);
-            backdrop-filter: blur(5px); /* Optional: Add a subtle blur effect */
+
+        #search-container.expanded #search-input-wrapper {
+             margin-bottom: 0px; /* Add margin when expanded */
         }
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            color: #00b4ff;
-            text-shadow: 0 0 10px rgba(0, 180, 255, 0.8);
+
+        #search-input {
+            padding: 14px 45px 14px 20px; /* Increased padding, space for clear button */
+            border-radius: 28px; /* More pill shape */
+            border: 1px solid rgba(150, 50, 200, 0.5); /* Subtle purple border */
+            width: 100%; /* Full width within wrapper */
+            background-color: rgba(255, 255, 255, 0.05); /* More transparent input */
+            color: #fff; /* White text in input */
+            font-size: 1.1em;
+            outline: none; /* Remove default outline */
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
         }
-        #page-list-container {
-            margin-top: 30px;
-            max-height: 200px;
-            overflow-y: auto;
-            padding-right: 10px; /* Space for scrollbar */
+        #search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6); /* Lighter placeholder text */
         }
-        #page-list-container::-webkit-scrollbar {
-            width: 8px;
+         #search-input:focus {
+             background-color: rgba(255, 255, 255, 0.1);
+             border-color: rgba(150, 50, 200, 0.8);
+             box-shadow: 0 0 10px rgba(150, 50, 200, 0.5); /* Subtle purple focus glow */
+         }
+
+        #clear-search {
+            position: absolute;
+            top: 50%;
+            right: 15px; /* Position inside the input */
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.3em; /* Slightly larger */
+            cursor: pointer;
+            padding: 5px; /* Make clickable area larger */
+            opacity: 0; /* Hidden by default */
+            pointer-events: none; /* Don't block input clicks */
+            transition: color 0.2s ease-in-out, opacity 0.2s ease-in-out;
         }
-        #page-list-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+        #clear-search.visible {
+            opacity: 1;
+            pointer-events: auto; /* Enable clicks when visible */
         }
-        #page-list-container::-webkit-scrollbar-thumb {
-            background: rgba(0, 180, 255, 0.5);
-            border-radius: 4px;
+        #clear-search:hover {
+            color: #fff;
         }
-        #page-list {
+
+
+        #search-results {
+            width: 100%; /* Make results list fill container width */
             list-style: none;
             padding: 0;
             margin: 0;
-        }
-        #page-list li {
-            background: rgba(255, 255, 255, 0.1);
-            margin-bottom: 10px;
-            padding: 10px 15px;
             border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s ease, transform 0.2s ease;
-            text-align: left;
-            border: 1px solid rgba(0, 180, 255, 0.3);
-        }
-        #page-list li:hover {
-            background: rgba(0, 180, 255, 0.3);
-            transform: translateX(5px);
-        }
-        #page-list li.selected {
-             background: rgba(0, 180, 255, 0.5);
-             border-color: #00b4ff;
-             font-weight: bold;
-        }
-        #search-container {
-            margin-top: 20px;
-            width: 100%;
-        }
-        #search-input {
-            width: calc(100% - 22px); /* Adjust for padding and border */
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(0, 180, 255, 0.5);
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            font-size: 1em;
-            outline: none;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        #search-input:focus {
-            border-color: #00b4ff;
-            box-shadow: 0 0 8px rgba(0, 180, 255, 0.6);
         }
 
-        /* Style for the info box (hover details) */
-        #info-box {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.9em;
-            pointer-events: none; /* Allow clicks to pass through */
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            border: 1px solid rgba(0, 180, 255, 0.5);
-            max-width: 300px; /* Limit width */
-            white-space: normal; /* Allow text wrapping */
-        }
-         #info-box.visible {
-            opacity: 1;
+        #search-results li {
+            padding: 15px 20px; /* More padding */
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* More subtle separator */
+            transition: background-color 0.2s ease-in-out;
+            font-size: 1.05em; /* Slightly larger font */
         }
 
-        /* Style for the selected star details overlay */
-        #selected-star-details {
-            position: fixed;
-            top: 50%;
-            right: 20px; /* Position on the right side */
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 350px;
-            width: 90%;
-            box-shadow: 0 0 20px rgba(0, 180, 255, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 2; /* Above the main overlay if it's still visible */
-            opacity: 0;
-            pointer-events: none; /* Initially not interactive */
-            transition: opacity 0.5s ease;
-            text-align: left;
+        #search-results li:last-child {
+            border-bottom: none;
         }
-        #selected-star-details.visible {
-            opacity: 1;
-            pointer-events: auto; /* Enable interaction when visible */
+
+        #search-results li:hover,
+        #search-results li.selected { /* Add selected class for keyboard navigation */
+            background-color: rgba(150, 50, 200, 0.08); /* Subtle purple background on hover/selected */
         }
-        #selected-star-details h2 {
-            font-size: 2em;
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: #00b4ff;
-            text-shadow: 0 0 8px rgba(0, 180, 255, 0.6);
-        }
-         #selected-star-details h3 {
-            font-size: 1.2em;
-            margin-top: 0;
-            margin-bottom: 5px;
-            color: #00b4ff;
-        }
-        #selected-star-details p {
-            font-size: 1em;
-            margin-bottom: 20px;
-            line-height: 1.5;
-            color: #ccc;
-        }
-        #travel-button {
-            display: inline-block;
-            background: linear-gradient(45deg, #00b4ff, #0077cc);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 1.1em;
-            font-weight: bold;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 180, 255, 0.4);
-        }
-        #travel-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 180, 255, 0.6);
-        }
-         #close-details-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: #ccc;
-            font-size: 1.5em;
-            cursor: pointer;
-            transition: color 0.2s ease;
-        }
-        #close-details-button:hover {
-            color: #fff;
-        }
+         /* --- End Revamped Search Bar Styling --- */
+
 
         /* Wormhole Animation Overlay */
-        #wormhole-overlay {
+        /* Removed this div as it was obscuring the canvas */
+
+        /* Traveling Text and Progress Bar Styles */
+        #wormhole-ui {
             position: fixed;
-            top: 0;
+            bottom: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background: #000; /* Solid black background initially */
-            z-index: 100; /* Ensure it's on top of everything */
-            opacity: 0;
-            pointer-events: none; /* Initially not interactive */
-            transition: opacity 0.3s ease-in; /* Fade in quickly */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden; /* Hide overflowing star streaks */
+            padding: 20px; /* Increased padding */
+            box-sizing: border-box;
+            text-align: center;
+            color: #fff;
+            font-size: 1.2em; /* Increased font size */
+            z-index: 50; /* Above canvas, below search/menu */
+            display: none; /* Hidden by default */ /* FIX: Set initial display to none */
+            flex-direction: column; /* Stack text and progress bar */
+            align-items: center; /* Center items horizontally */
+            justify-content: center; /* Center items vertically */
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); /* Subtle gradient fade */
+            pointer-events: none; /* Allow clicks to pass through by default */
         }
-
-        /* Keyframes for the lightspeed effect */
-        @keyframes lightspeed {
-            0% {
-                transform: scale(1);
-                opacity: 0.5;
-            }
-            100% {
-                transform: scale(10); /* Scale up significantly */
-                opacity: 1;
-            }
-        }
-
-        /* Style for the star streaks */
-        .star-streak {
-            position: absolute;
-            background-color: #fff;
-            width: 2px; /* Width of the streak */
-            height: 2px; /* Height of the streak */
-            border-radius: 50%;
-            opacity: 0; /* Start invisible */
-            animation: lightspeed 1.5s ease-in forwards; /* Apply animation */
-        }
-
-
-         #wormhole-overlay.active {
-            opacity: 1;
-            pointer-events: auto; /* Enable interaction during animation */
-            /* The animation is applied to the .star-streak elements */
+         #wormhole-ui.active {
+             pointer-events: auto; /* Enable clicks when active */
          }
+
+
+        #travel-text {
+            margin-bottom: 15px; /* Space between text and progress bar */
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(167, 139, 250, 0.4); /* Subtle purple glow */
+        }
+
+        #progress-bar-container {
+            width: 80%; /* Adjust width as needed */
+            max-width: 500px; /* Max width for larger screens */
+            height: 12px; /* Increased height */
+            background-color: rgba(255, 255, 255, 0.2); /* Transparent white track */
+            border-radius: 6px; /* Rounded corners */
+            overflow: hidden; /* Hide overflowing progress */
+            margin: 0 auto; /* Center the progress bar */
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3); /* Inner shadow */
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%; /* Starts at 0 */
+            background-color: #a78bfa; /* Tailwind violet-400 */
+            border-radius: 6px; /* Match container corners */
+            transition: width linear; /* Smooth linear transition */
+        }
+
+        #skip-button {
+            position: absolute;
+            bottom: 20px; /* Position from the bottom */
+            right: 20px; /* Position from the right */
+            padding: 10px 20px; /* Padding */
+            background-color: rgba(239, 68, 68, 0.7); /* Transparent red-500 */
+            color: white;
+            border: 1px solid rgba(239, 68, 68, 0.5); /* Subtle red border */
+            border-radius: 8px; /* Rounded corners */
+            cursor: pointer;
+            font-size: 1em;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); /* Subtle red shadow */
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            z-index: 60; /* Above wormhole UI */
+            display: none; /* Hidden by default */
+        }
+        #skip-button:hover {
+             background-color: rgba(220, 38, 38, 0.8); /* Darker red on hover */
+             box-shadow: 0 6px 12px rgba(220, 38, 38, 0.4); /* More prominent shadow on hover */
+        }
+        #skip-button:active {
+             background-color: rgba(185, 28, 28, 0.9); /* Even darker red on active */
+             box-shadow: 0 2px 5px rgba(185, 28, 28, 0.5);
+        }
+
+
     </style>
 </head>
 <body>
-    <div id="galaxy-container"></div>
-    <div id="overlay">
-        <div id="content">
-            <h1>Welcome to the Glaxay</h1>
-            <p>Explore the stars, each representing a different project!</p>
-            <div id="search-container">
-                <input type="text" id="search-input" placeholder="Search projects...">
-            </div>
-            <div id="page-list-container">
-                <ul id="page-list">
-                    </ul>
-            </div>
+    <div id="search-container">
+        <div id="search-input-wrapper">
+            <input type="text" id="search-input" placeholder="Search projects...">
+            <button id="clear-search" title="Clear search">&times;</button>
+        </div>
+        <ul id="search-results"></ul>
+    </div>
+
+    <div id="tooltip" class="rounded-lg"></div>
+
+    <div id="side-menu">
+        <button id="close-menu">&times;</button>
+        <h2 id="menu-project-name"></h2>
+        <p><strong>Link:</strong> <a id="menu-project-link" href="#" target="_blank"></a></p>
+        <p><strong>Version:</strong> <span id="menu-project-version"></span></p>
+        <p><strong>Description:</strong> <span id="menu-project-description"></span></p>
+        <button id="travel-button"></button>
+    </div>
+
+    <div id="wormhole-ui">
+        <div id="travel-text">Initiating Warp Sequence...</div>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
         </div>
     </div>
 
-    <div id="info-box"></div>
+    <button id="skip-button">Skip Warp</button>
 
-    <div id="selected-star-details">
-        <button id="close-details-button">&times;</button>
-        <h2 id="details-page-name"></h2>
-        <h3 id="details-page-version"></h3>
-        <p id="details-page-description"></p>
-        <button id="travel-button">Travel to Page</button>
-    </div>
-
-    <div id="wormhole-overlay">
-        </div>
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/tween.min.js"></script>
 
     <script>
-        // List of your project pages (replace with your actual page names, descriptions, and versions)
-        const pageList = [
-            { name: "randomcolor", displayName: "Random Color Generator", version: "1.0", description: "Generates random colors with their names from colornames.org" },
-            { name: "graphisizer", displayName: "Graphisizer", version: "2.0", description: "A tool for visualizing WCA results" },
-            { name: "polystats", displayName: "PolyStats", version: "alpha 3", description: "Displays stats and data for the game Polytrack" },
-            { name: "wordhunt", displayName: "Word Hunt Trainer", version: "alpha 1", description: "A trainer for the gamepigeon word hunt game" },
+        // Project Data - Define your projects here
+        const projects = [
+             { id: 'wordhunt', name: 'Word Hunt Trainer', link: 'https://mythses.github.io/wordhunt', version: 'Alpha 4.1', description: 'A trainer for the GamePigeon Word Hunt game' },
+            { id: 'randomcolor', name: 'Random Color Generator', link: 'https://mythses.github.io/randomcolor', version: '1.0', description: 'Generates random colors with their names from colornames.org' },
+            { id: 'polystats', name: 'PolyStats', link: 'https://mythses.github.io/polystats', version: 'Alpha 3', description: 'Displays stats and data for the game Polytrack' },
+            { id: 'graphisizer', name: 'Graphisizer', link: 'https://mythses.github.io/graphisizer', version: '2.0', description: 'A tool for visualizing WCA results' },
         ];
 
-        let scene, camera, renderer, controls;
-        let starsGeometry, starsMaterial, starField;
-        const stars = []; // Array to hold individual star objects (Meshes)
-        let raycaster;
-        let mouse = new THREE.Vector2();
-        let mousePosition = { x: 0, y: 0 }; // To track global mouse position for UI check
-        let selectedStar = null;
-        let targetPosition = new THREE.Vector3();
-        let isAnimatingCamera = false;
-        let isMouseOverOverlay = false; // Flag to check if mouse is over any UI overlay
+        // --- Three.js Main Star System Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement); // Appends the canvas
 
-        const overlayElement = document.getElementById('overlay');
-        const infoBox = document.getElementById('info-box');
-        const pageListElement = document.getElementById('page-list');
-        const searchInput = document.getElementById('search-input');
-        const selectedStarDetailsElement = document.getElementById('selected-star-details');
-        const detailsPageNameElement = document.getElementById('details-page-name');
-        const detailsPageVersionElement = document.getElementById('details-page-version'); // Element for version
-        const detailsPageDescriptionElement = document.getElementById('details-page-description');
-        const travelButton = document.getElementById('travel-button');
-        const closeDetailsButton = document.getElementById('close-details-button');
-        const wormholeOverlayElement = document.getElementById('wormhole-overlay');
+        // Orbit Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
+        controls.screenSpacePanning = false;
+        controls.maxPolarAngle = Math.PI;
 
+        // Starry Background
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
+        const starVertices = [];
+        const starCount = 5000;
+        const starFieldRadius = 1000; // Outer boundary for stars
 
-        // --- Initialization ---
-        function init() {
-            console.log("Initializing Three.js scene...");
-            // Scene setup
-            scene = new THREE.Scene();
+        // Calculate minimum distance for stars based on planet orbits
+        const maxPlanetDistance = projects.reduce((max, project, index) => {
+            const distance = 20 + index * 10;
+            return Math.max(max, distance);
+        }, 0);
+        const minStarDistance = maxPlanetDistance + 50; // Add a buffer zone
 
-            // Camera setup
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 50; // Starting position
-            camera.lookAt(new THREE.Vector3(0, 0, 0)); // Ensure camera is looking at the center
-            console.log("Camera setup complete.");
+        for (let i = 0; i < starCount; i++) {
+            const x = (Math.random() - 0.5) * 2 * starFieldRadius;
+            const y = (Math.random() - 0.5) * 2 * starFieldRadius;
+            const z = (Math.random() - 0.5) * 2 * starFieldRadius;
+            const distance = Math.sqrt(x * x + y * y + z * z);
 
-            // Renderer setup
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setClearColor(0x000000, 1); // Explicitly set background color to black
-            document.getElementById('galaxy-container').appendChild(renderer.domElement);
-            console.log("Renderer setup complete.");
-
-            // Orbit Controls
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; // Smooth camera movement
-            controls.dampingFactor = 0.25;
-            controls.screenSpacePanning = false;
-            controls.maxPolarAngle = Math.PI / 2; // Prevent looking straight down
-            controls.enableZoom = true; // Enable zoom
-            controls.minDistance = 5; // Minimum zoom distance
-            controls.maxDistance = 100; // Maximum zoom distance
-             // Enable rotation by default
-            controls.enableRotate = true;
-            console.log("OrbitControls setup complete.");
-
-            // Raycaster for interaction
-            raycaster = new THREE.Raycaster();
-            console.log("Raycaster setup complete.");
-
-            // Create the starfield background
-            createStarfield();
-            console.log("Starfield created.");
-
-            // Create stars for each page
-            createPageStars();
-            console.log("Page stars created.");
-
-            // Populate the page list in the HTML
-            populatePageList();
-            console.log("Page list populated.");
-
-            // Add event listeners
-            window.addEventListener('resize', onWindowResize, false);
-            window.addEventListener('mousemove', onMouseMove, false);
-            window.addEventListener('click', onClick, false);
-            searchInput.addEventListener('input', onSearchInput);
-            closeDetailsButton.addEventListener('click', deselectStar); // Close button for details
-
-            // Add mouse enter/leave listeners for UI elements to control interaction
-            overlayElement.addEventListener('mouseenter', () => isMouseOverOverlay = true);
-            overlayElement.addEventListener('mouseleave', () => isMouseOverOverlay = false);
-            selectedStarDetailsElement.addEventListener('mouseenter', () => isMouseOverOverlay = true);
-            selectedStarDetailsElement.addEventListener('mouseleave', () => isMouseOverOverlay = false);
-
-             // Prevent default scroll behavior when mouse is over UI elements and control OrbitControls
-            window.addEventListener('wheel', onMouseWheel, { passive: false });
-             // Control OrbitControls interaction based on mouse position
-            renderer.domElement.addEventListener('mousemove', onCanvasMouseMove, false);
-            renderer.domElement.addEventListener('mousedown', onCanvasMouseDown, false);
-            renderer.domElement.addEventListener('mouseup', onCanvasMouseUp, false);
-
-
-            // Start the animation loop
-            animate();
-            console.log("Animation loop started.");
-        }
-
-        // --- Create Starfield Background ---
-        function createStarfield() {
-            const numStars = 10000; // Number of background stars
-            const positions = new Float32Array(numStars * 3);
-            const colors = new Float32Array(numStars * 3);
-
-            const color = new THREE.Color();
-
-            for (let i = 0; i < numStars; i++) {
-                // Position stars randomly in a sphere
-                const radius = 200 + Math.random() * 300; // Distance from center
-                const theta = Math.random() * Math.PI * 2; // Angle around Y axis
-                const phi = Math.acos((Math.random() * 2) - 1); // Angle from Y axis
-
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-
-                // Assign random colors (subtle variations)
-                color.setHSL(0.6, 0.2 + Math.random() * 0.3, 0.5 + Math.random() * 0.5); // Bluish/white hues
-                colors[i * 3] = color.r;
-                colors[i * 3 + 1] = color.g;
-                colors[i * 3 + 2] = color.b;
-            }
-
-            starsGeometry = new THREE.BufferGeometry();
-            starsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            starsGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-            starsMaterial = new THREE.PointsMaterial({
-                size: 0.5,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.8
-            });
-
-            starField = new THREE.Points(starsGeometry, starsMaterial);
-            scene.add(starField);
-        }
-
-        // --- Create Stars for Pages ---
-        function createPageStars() {
-            const numPages = pageList.length;
-            const radius = 30; // Radius of the sphere where page stars are placed
-
-            pageList.forEach((pageData, index) => {
-                // Position stars somewhat evenly on a sphere
-                const phi = Math.acos(-1 + (2 * index) / numPages);
-                const theta = Math.sqrt(numPages * Math.PI) * phi;
-
-                const x = radius * Math.sin(phi) * Math.cos(theta);
-                const y = radius * Math.sin(phi) * Math.sin(theta);
-                const z = radius * Math.cos(phi);
-
-                // Create a group to hold the star and its glow effect
-                const starGroup = new THREE.Group();
-                starGroup.position.set(x, y, z);
-
-                // Main star sphere
-                const starGeometry = new THREE.SphereGeometry(0.8, 16, 16); // Size and detail
-                const starMaterial = new THREE.MeshBasicMaterial({ color: 0x00b4ff }); // Bright blue
-                const starMesh = new THREE.Mesh(starGeometry, starMaterial);
-                starGroup.add(starMesh); // Add mesh to the group
-
-                // Glow effect (larger, semi-transparent sphere)
-                const glowGeometry = new THREE.SphereGeometry(1.5, 16, 16); // Slightly larger
-                const glowMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00b4ff,
-                    transparent: true,
-                    opacity: 0.2, // Semi-transparent
-                    side: THREE.BackSide // Render on the inside
-                });
-                const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
-                starGroup.add(glowMesh); // Add glow to the group
-
-                // Attach the page data to the group
-                starGroup.userData = { page: pageData, index: index, isPageStar: true }; // Add flag to identify page stars
-
-                scene.add(starGroup);
-                stars.push(starGroup); // Add the group to the stars array
-            });
-        }
-
-        // --- Populate HTML Page List ---
-        function populatePageList(filteredPages = pageList) {
-            pageListElement.innerHTML = ''; // Clear current list
-
-            filteredPages.forEach(pageData => {
-                const li = document.createElement('li');
-                li.textContent = `${pageData.displayName} (${pageData.version})`; // Display displayName and version
-                li.dataset.pageName = pageData.name; // Store original name for easy lookup
-                li.dataset.index = pageList.findIndex(p => p.name === pageData.name); // Store original index
-                li.addEventListener('click', handlePageListItemClick);
-                pageListElement.appendChild(li);
-            });
-        }
-
-        // --- Handle Page List Item Click ---
-        function handlePageListItemClick(event) {
-            const clickedPageName = event.target.dataset.pageName;
-
-            // Find the corresponding star group using the original name
-            const starGroup = stars.find(s => s.userData.isPageStar && s.userData.page.name === clickedPageName);
-
-            if (starGroup) {
-                selectStar(starGroup);
-            }
-        }
-
-
-        // --- Animation Loop ---
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Update controls
-            controls.update();
-
-            // Animate stars (subtle rotation or scaling) - now animating the group
-            stars.forEach(starGroup => {
-                 if (starGroup.userData.isPageStar) {
-                    starGroup.rotation.y += 0.002; // Rotate the group
-                 }
-            });
-
-            // Update Tween.js animations (only if TWEEN is defined)
-            if (typeof TWEEN !== 'undefined') {
-                TWEEN.update();
+            // Only add stars outside the minimum distance and within the outer boundary
+            if (distance >= minStarDistance && distance <= starFieldRadius) {
+                starVertices.push(x, y, z);
             } else {
-                 // console.warn("TWEEN is not defined. Camera animations will not work.");
+                // If the star is too close or too far, try generating another one
+                i--;
             }
+        }
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 1, 1).normalize();
+        scene.add(directionalLight);
+
+        // Star (Sun)
+        const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
+        const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        scene.add(sun);
+
+        // Planets (Projects)
+        const planetMeshes = [];
+        const planetDataMap = new Map();
+        const planetOrbits = [];
+        const originalPlanetColors = new Map();
+
+        projects.forEach((project, index) => {
+            const distance = 20 + index * 10;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 0.001 + index * 0.0003;
+
+            const planetGeometry = new THREE.SphereGeometry(1 + Math.random() * 1.5, 32, 32);
+            const initialColor = Math.random() * 0xffffff;
+            const planetMaterial = new THREE.MeshPhongMaterial({ color: initialColor });
+            const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+
+            planet.position.set(distance * Math.cos(angle), 0, distance * Math.sin(angle));
+            planet.userData = { projectId: project.id };
+            scene.add(planet);
+            planetMeshes.push(planet);
+            planetDataMap.set(planet, project);
+            planetOrbits.push({ mesh: planet, distance: distance, angle: angle, speed: speed });
+            originalPlanetColors.set(planet, initialColor);
+
+            // Orbit Path Line
+            const orbitGeometry = new THREE.RingGeometry(distance - 0.1, distance + 0.1, 64);
+            const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.2 });
+            const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+            orbit.rotation.x = Math.PI / 2;
+            scene.add(orbit);
+        });
+
+        // Camera initial position
+        camera.position.z = 50;
+
+        // Store the initial offset from camera to planet when focused
+        let cameraOffset = new THREE.Vector3(0, 5, 15); // Default offset
+
+        // Raycaster for interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        // Store raw mouse coordinates for tooltip positioning
+        let mouseX = 0;
+        let mouseY = 0;
 
 
-            renderer.render(scene, camera);
+        let hoveredPlanet = null;
+        let focusedPlanet = null;
+        let isAnimatingFocus = false;
+        let selectedSearchResultIndex = -1;
+
+        // DOM Elements
+        const tooltip = document.getElementById('tooltip');
+        const sideMenu = document.getElementById('side-menu');
+        const closeMenuButton = document.getElementById('close-menu');
+        const menuProjectName = document.getElementById('menu-project-name');
+        const menuProjectLink = document.getElementById('menu-project-link');
+        const menuProjectVersion = document.getElementById('menu-project-version');
+        const menuProjectDescription = document.getElementById('menu-project-description');
+        const travelButton = document.getElementById('travel-button');
+        const searchContainer = document.getElementById('search-container');
+        const searchInput = document.getElementById('search-input');
+        const searchResultsList = document.getElementById('search-results');
+        const clearSearchButton = document.getElementById('clear-search');
+        // Wormhole UI elements
+        const wormholeUI = document.getElementById('wormhole-ui');
+        const travelTextElement = document.getElementById('travel-text');
+        const progressBarElement = document.getElementById('progress-bar');
+        const skipButton = document.getElementById('skip-button');
+
+
+        // Event Listeners
+        window.addEventListener('resize', onWindowResize, false);
+        renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+        renderer.domElement.addEventListener('click', onClick, false);
+        closeMenuButton.addEventListener('click', closeSideMenu, false);
+        travelButton.addEventListener('click', onTravelClick, false);
+        searchInput.addEventListener('input', onSearchInput, false);
+        clearSearchButton.addEventListener('click', clearSearch, false);
+        searchResultsList.addEventListener('click', onSearchResultClick, false);
+        searchInput.addEventListener('keydown', onSearchInputKeydown, false);
+        skipButton.addEventListener('click', onSkipClick, false); // Add listener for skip button
+
+
+        // Add mouseover/mouseout listeners for search results list items using delegation
+        searchResultsList.addEventListener('mouseover', onSearchResultMouseOver, false);
+        searchResultsList.addEventListener('mouseout', onSearchResultMouseOut, false);
+
+
+        // Search bar focus/blur listeners
+        searchInput.addEventListener('focus', expandSearch, false);
+        searchInput.addEventListener('blur', collapseSearch, false);
+
+        // Click listener to close search/menu when clicking outside
+        document.body.addEventListener('click', (event) => {
+            const isClickInsideSearch = searchContainer.contains(event.target);
+            const isClickInsideSideMenu = sideMenu.contains(event.target);
+
+             // Check if the click target is the canvas itself
+            const isClickOnCanvas = event.target === renderer.domElement;
+
+
+            // Close search if expanded and clicked outside (and not on the canvas during wormhole)
+            if (searchContainer.classList.contains('expanded') && !isClickInsideSearch && (!isWormholeAnimating || !isClickOnCanvas)) {
+                collapseSearch();
+            }
+            // Close side menu if open and clicked outside (and not on the canvas during wormhole)
+            if (sideMenu.classList.contains('open') && !isClickInsideSideMenu && (!isWormholeAnimating || !isClickOnCanvas)) {
+                 closeSideMenu();
+            }
+             // If wormhole is animating and click is not inside search/menu, handle canvas click logic if any is needed
+             if (isWormholeAnimating && !isClickInsideSearch && !isClickInsideSideMenu) {
+                 // Add any specific click logic for the wormhole animation here if needed
+                 console.log("Click on canvas during wormhole animation.");
+             }
+        });
+
+        // Prevent blur from collapsing immediately if clicking a search result
+        searchResultsList.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+        });
+
+
+        // --- Three.js Main Animation Loop ---
+        let currentAnimationId = null; // To store the current animation frame ID
+        let isWormholeAnimating = false; // Flag to control which scene is rendered
+        let wormholeStartTime = 0; // To track the start time of the wormhole animation
+        const wormholeDuration = 4000; // Shorter duration (4 seconds)
+
+        // Traveling text messages
+        const travelMessages = [
+            "Initiating Warp Sequence...",
+            "Calculating Jump Coordinates...",
+            "Entering Hyperspace...",
+            "Approaching Destination...",
+            "Exiting Warp..."
+        ];
+        let currentMessageIndex = 0;
+        // Adjust message interval for shorter duration
+        let messageInterval = wormholeDuration / travelMessages.length;
+
+
+        function animate(currentTime) {
+            currentAnimationId = requestAnimationFrame(animate);
+
+            if (isWormholeAnimating) {
+                // console.log("Rendering wormhole scene..."); // Keep this commented unless needed for debugging
+                // --- Wormhole Animation Logic ---
+                 if (!wormholeAnimationScene || !wormholeAnimationCamera || !wormholeParticleGeometry || !wormholeParticleMaterial) {
+                     console.error("Wormhole animation resources not fully initialized in animate (wormhole). Attempting to stop.");
+                     stopWormholeAnimation(); // Attempt to clean up if resources are missing
+                     return;
+                 }
+
+                // Calculate elapsed time for UI updates
+                const elapsedTime = currentTime - wormholeStartTime;
+                const progress = Math.min(elapsedTime / wormholeDuration, 1);
+
+                // Update Progress Bar
+                progressBarElement.style.width = (progress * 100) + '%';
+
+                // Update Traveling Text
+                const newMessageIndex = Math.min(Math.floor(elapsedTime / messageInterval), travelMessages.length - 1);
+                if (newMessageIndex !== currentMessageIndex) {
+                    currentMessageIndex = newMessageIndex;
+                    travelTextElement.textContent = travelMessages[currentMessageIndex];
+                }
+
+
+                // Move the wormhole camera based on mouse position (subtle effect)
+                wormholeAnimationCamera.position.x += (wormholeMouseX * 0.001 - wormholeAnimationCamera.position.x) * .05;
+                wormholeAnimationCamera.position.y += (-wormholeMouseY * 0.001 - wormholeAnimationCamera.position.y) * .05;
+                // Camera Z position is fixed for the warp effect
+
+
+                // Get particle positions and velocities
+                const positions = wormholeParticleGeometry.attributes.position.array;
+                const velocities = wormholeParticleGeometry.attributes.velocity.array;
+                const colors = wormholeParticleGeometry.attributes.color.array; // Get color array
+                const sizes = wormholeParticleGeometry.attributes.size.array; // Get size array
+
+                // Update particle positions
+                for (let i = 0; i < positions.length; i += 3) {
+                    // Move particle along its velocity vector (towards NEGATIVE Z for warp IN)
+                    positions[i] += velocities[i];
+                    positions[i + 1] += velocities[i + 1];
+                    positions[i + 2] += velocities[i + 2];
+
+                    // If a particle goes beyond the camera (or a point near it), reset its position
+                    // to the end of the tunnel (positive Z) within the donut shape and assign a new color and size
+                    // Check if particle Z is less than the camera's Z (moving past the camera)
+                    if (positions[i + 2] < wormholeAnimationCamera.position.z) {
+                        const angle = Math.random() * Math.PI * 2;
+                        // Distribute particles between inner and outer radius
+                        const radius = innerRadius + Math.random() * (outerRadius - innerRadius);
+                        positions[i] = Math.cos(angle) * radius;
+                        positions[i + 1] = Math.sin(angle) * radius;
+                        positions[i + 2] = endZ; // Reset to the endZ (positive Z)
+
+                        // Assign a new random color from the predefined list when resetting
+                        const color = new THREE.Color();
+                        const randomHSL = getRandomColorHSL();
+                        color.setHSL(randomHSL.h, randomHSL.s, randomHSL.l);
+
+                        colors[i * 3] = color.r;
+                        colors[i * 3 + 1] = color.g;
+                        colors[i * 3 + 2] = color.b;
+
+                        // Assign a new random size when resetting
+                        sizes[i / 3] = (Math.random() * 8.0) + 1.0; // Increased max size to 9.0
+                    }
+
+                    // Optional: Add some acceleration or change in velocity
+                    // velocities[i + 2] -= 0.005; // Accelerate towards negative Z
+                }
+
+                // Indicate that the position, color, and size attributes need to be updated
+                wormholeParticleGeometry.attributes.position.needsUpdate = true;
+                wormholeParticleGeometry.attributes.color.needsUpdate = true; // Indicate color update
+                wormholeParticleGeometry.attributes.size.needsUpdate = true; // Indicate size update
+
+                // Render the wormhole scene
+                renderer.render(wormholeAnimationScene, wormholeAnimationCamera);
+
+            } else {
+                // --- Main Star System Animation Logic ---
+                 if (!scene || !camera) {
+                     console.error("Main animation resources not fully initialized in animate (main).");
+                     return;
+                 }
+
+                // Animate Planets Orbiting
+                planetOrbits.forEach(orbitData => {
+                    orbitData.angle += orbitData.speed;
+                    orbitData.mesh.position.x = orbitData.distance * Math.cos(orbitData.angle);
+                    orbitData.mesh.position.z = orbitData.distance * Math.sin(orbitData.angle);
+                });
+
+                // Check if the side menu is open and a planet is focused
+                if (sideMenu.classList.contains('open') && focusedPlanet) {
+                    // Get the current world position of the focused planet
+                    const targetPosition = new THREE.Vector3();
+                    focusedPlanet.getWorldPosition(targetPosition);
+
+                    // Update the OrbitControls target to follow the planet
+                    controls.target.copy(targetPosition);
+
+                    // Calculate the desired camera position relative to the planet
+                    const desiredCameraPosition = targetPosition.clone().add(cameraOffset);
+
+                    // Smoothly interpolate the camera's current position towards the desired position
+                    // Need a separate progress variable or remove interpolation if not desired here
+                    // camera.position.lerpVectors(startPosition, finalCameraPosition, progress);
+                    // controls.target.lerpVectors(startLookAt, targetPosition, progress);
+                    controls.update(); // Update controls to apply the new target
+
+                } else {
+                     // Only update controls normally if not following a planet
+                     controls.update();
+                }
+
+
+                // Raycasting for planet hover (only when search is NOT open and side menu is NOT open and NOT animating focus)
+                if (!searchContainer.classList.contains('expanded') && !sideMenu.classList.contains('open') && !isAnimatingFocus) {
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects(planetMeshes);
+                    if (intersects.length > 0) {
+                        const intersected = intersects[0].object;
+                        if (hoveredPlanet !== intersected) {
+                            hoveredPlanet = intersected;
+                             // Show tooltip for planet hover (canvas interaction)
+                            // Use stored mouse coordinates for positioning
+                            showTooltip(planetDataMap.get(hoveredPlanet), mouseX + 10, mouseY + 10);
+                        }
+                    } else {
+                        if (hoveredPlanet) {
+                            hideTooltip(); // Hide tooltip if mouse leaves planet
+                            hoveredPlanet = null;
+                        }
+                    }
+                } else if (sideMenu.classList.contains('open') || isAnimatingFocus) {
+                     // Hide tooltip if side menu is open or animating focus
+                     hideTooltip();
+                     hoveredPlanet = null; // Ensure hoveredPlanet is cleared
+                }
+                // Search result tooltip is handled by separate mouseover/mouseout events on the list itself.
+                // The hideTooltip() call in the else if block will also hide the search result tooltip if the side menu is opened
+                // while hovering a search result, which is the desired behavior.
+
+
+                // Render the main scene
+                renderer.render(scene, camera);
+            }
         }
 
         // --- Event Handlers ---
         function onWindowResize() {
+            windowHalfX = window.innerWidth / 2;
+            windowHalfY = window.innerHeight / 2;
+
+            // Update main camera and renderer
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // Update wormhole camera if it exists
+            if (wormholeAnimationCamera) {
+                 wormholeAnimationCamera.aspect = window.innerWidth / window.innerHeight;
+                 wormholeAnimationCamera.updateProjectionMatrix();
+                 // Update wormhole window half sizes as well
+                 wormholeWindowHalfX = window.innerWidth / 2;
+                 wormholeWindowHalfY = window.innerHeight / 2;
+            }
         }
 
         function onMouseMove(event) {
-            // Calculate mouse position in normalized device coordinates (-1 to +1) for raycaster
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            // Update raw mouse coordinates
+            mouseX = event.clientX;
+            mouseY = event.clientY;
 
-            // Store global mouse position for UI check
-            mousePosition.x = event.clientX;
-            mousePosition.y = event.clientY;
+            // Update normalized device coordinates for raycasting (only needed for main scene interaction)
+            if (!isWormholeAnimating) {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            }
 
-
-            // Update the raycaster with the camera and mouse position
-            raycaster.setFromCamera(mouse, camera);
-
-            // Find intersecting objects (only check the page star meshes within the groups)
-            const intersectableObjects = stars.map(group => group.children[0]); // Get the main star mesh from each group
-            const intersects = raycaster.intersectObjects(intersectableObjects);
-
-            // Show info box on hover
-            if (intersects.length > 0) {
-                const intersectedMesh = intersects[0].object;
-                const intersectedStarGroup = intersectedMesh.parent; // Get the parent group
-                infoBox.innerHTML = `<strong>${intersectedStarGroup.userData.page.displayName} (${intersectedStarGroup.userData.page.version})</strong><br>${intersectedStarGroup.userData.page.description}`; // Display displayName, version, and description
-                infoBox.style.left = `${event.clientX + 15}px`;
-                infoBox.style.top = `${event.clientY + 15}px`;
-                infoBox.classList.add('visible');
-            } else {
-                infoBox.classList.remove('visible');
+            // Pass mouse coordinates to the wormhole animation if it's active
+            if (isWormholeAnimating) {
+                 wormholeMouseX = (event.clientX - wormholeWindowHalfX);
+                 wormholeMouseY = (event.clientY - wormholeWindowHalfY);
             }
         }
 
         function onClick(event) {
-             // If the details panel is visible, don't process clicks in the 3D scene
-            if (selectedStarDetailsElement.classList.contains('visible')) {
-                return;
+             // Check if the click was inside the search container or side menu
+             const isClickInsideSearch = searchContainer.contains(event.target);
+             const isClickInsideSideMenu = sideMenu.contains(event.target);
+             // Check if the click target is the canvas itself
+            const isClickOnCanvas = event.target === renderer.domElement;
+
+
+             if (isClickInsideSearch || isClickInsideSideMenu || (isWormholeAnimating && !isClickOnCanvas)) {
+                 return; // Don't do anything if clicking inside search, menu, or on non-canvas elements during wormhole animation
+             }
+
+             // If wormhole is animating and click is on canvas, handle canvas click logic if any is needed
+             if (isWormholeAnimating && isClickOnCanvas) {
+                 // Add any specific click logic for the wormhole animation here if needed
+                 console.log("Click on canvas during wormhole animation.");
+                 return; // Prevent main scene click logic
+             }
+
+
+            // Main scene click logic (only if not wormhole animating and not inside search/menu)
+            if (!isWormholeAnimating && !searchContainer.classList.contains('expanded') && !isAnimatingFocus) {
+                 mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                 mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                 raycaster.setFromCamera(mouse, camera);
+                 const intersects = raycaster.intersectObjects(planetMeshes);
+
+                 if (intersects.length > 0) {
+                     const clickedPlanet = intersects[0].object;
+                     focusOnPlanet(clickedPlanet);
+                 } else if (focusedPlanet) {
+                     // Close side menu if clicking outside of it and not on a planet
+                     closeSideMenu();
+                 }
             }
+        }
 
-            // Calculate mouse position in normalized device coordinates (-1 to +1)
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            // Update the raycaster with the camera and mouse position
-            raycaster.setFromCamera(mouse, camera);
-
-             // Find intersecting objects (only check the page star meshes within the groups)
-            const intersectableObjects = stars.map(group => group.children[0]); // Get the main star mesh from each group
-            const intersects = raycaster.intersectObjects(intersectableObjects);
-
-
-            if (intersects.length > 0) {
-                const clickedMesh = intersects[0].object;
-                const clickedStarGroup = clickedMesh.parent; // Get the parent group
-                selectStar(clickedStarGroup);
-
-            } else {
-                // If no star is clicked, deselect the current star
-                deselectStar();
+        function onTravelClick() {
+            if (focusedPlanet) {
+                const projectData = planetDataMap.get(focusedPlanet);
+                if (projectData && projectData.link) {
+                    // Start the wormhole animation and UI updates
+                    startWormholeAnimation(projectData.link); // Pass the link to the animation function
+                }
             }
         }
 
-         // --- Mouse Wheel Handler for Conditional Zoom ---
-        function onMouseWheel(event) {
-            // Check if the mouse is currently over the main overlay or the details overlay
-            const overlayRect = overlayElement.getBoundingClientRect();
-            const detailsRect = selectedStarDetailsElement.getBoundingClientRect();
+        // New function to handle skipping
+        function onSkipClick() {
+             console.log("Skip button clicked.");
+             // Get the current focused planet's link
+             let linkToOpen = null;
+             if (focusedPlanet) {
+                 const projectData = planetDataMap.get(focusedPlanet);
+                 if (projectData && projectData.link) {
+                     linkToOpen = projectData.link;
+                 }
+             }
 
-            const isOverOverlay = mousePosition.x > overlayRect.left && mousePosition.x < overlayRect.right &&
-                                 mousePosition.y > overlayRect.top && mousePosition.y < overlayRect.bottom;
+             // Stop the animation immediately
+             stopWormholeAnimation();
 
-            const isOverDetails = selectedStarDetailsElement.classList.contains('visible') && // Only check if details are visible
-                                 mousePosition.x > detailsRect.left && mousePosition.x < detailsRect.right &&
-                                 mousePosition.y > detailsRect.top && mousePosition.y < detailsRect.bottom;
+             // Open the link if available
+             if (linkToOpen) {
+                 window.open(linkToOpen, '_blank');
+             } else {
+                 console.warn("Skip clicked, but no project link was found.");
+             }
 
-            if (isOverOverlay || isOverDetails) {
-                // Prevent default scroll behavior if mouse is over a UI element
-                event.preventDefault();
-            }
-            // If not over a UI element, OrbitControls will handle the zoom
-        }
-
-        // --- Canvas Mouse Move Handler to Control Rotation ---
-        function onCanvasMouseMove() {
-             // Enable rotation only if the mouse is over the canvas and not over a UI overlay
-            controls.enableRotate = !isMouseOverOverlay;
-             controls.enablePan = !isMouseOverOverlay; // Also disable pan
-        }
-
-         // --- Canvas Mouse Down Handler to Control Rotation ---
-        function onCanvasMouseDown() {
-             // Enable rotation only if the mouse is over the canvas and not over a UI overlay
-             // This is important to prevent dragging the galaxy when clicking on UI
-             controls.enableRotate = !isMouseOverOverlay;
-             controls.enablePan = !isMouseOverOverlay; // Also disable pan
-        }
-
-         // --- Canvas Mouse Up Handler ---
-        function onCanvasMouseUp() {
-             // Re-enable rotation after mouse up, regardless of overlay state,
-             // as the user might have dragged off the overlay.
-             // The onCanvasMouseMove will then disable it again if the mouse is over the overlay.
-            controls.enableRotate = true;
-            controls.enablePan = true; // Re-enable pan
+              // Add a slight delay before resetting main scene UI after skip
+              setTimeout(() => {
+                 hideTooltip();
+                 closeSideMenu();
+                 focusedPlanet = null;
+                 isAnimatingFocus = false;
+                 controls.enabled = true; // Re-enable controls
+              }, 100); // Very short delay for immediate feel
         }
 
 
         function onSearchInput(event) {
             const searchTerm = event.target.value.toLowerCase();
-            // Filter based on displayName, name, description, or version
-            const filteredPages = pageList.filter(pageData =>
-                pageData.displayName.toLowerCase().includes(searchTerm) ||
-                pageData.name.toLowerCase().includes(searchTerm) ||
-                pageData.description.toLowerCase().includes(searchTerm) ||
-                pageData.version.toLowerCase().includes(searchTerm)
-            );
-            populatePageList(filteredPages);
+            searchResultsList.innerHTML = '';
+            selectedSearchResultIndex = -1;
 
-            // Highlight stars that match the search term
-            stars.forEach(starGroup => {
-                 if (starGroup.userData.isPageStar) {
-                    const pageData = starGroup.userData.page;
-                    const isMatch = pageData.displayName.toLowerCase().includes(searchTerm) ||
-                                    pageData.name.toLowerCase().includes(searchTerm) ||
-                                    pageData.description.toLowerCase().includes(searchTerm) ||
-                                    pageData.version.toLowerCase().includes(searchTerm);
-                    // Highlight the main star mesh
-                    starGroup.children[0].material.color.set(isMatch ? 0xffff00 : 0x00b4ff); // Highlight yellow, default blue
-                 }
-            });
-
-            // Deselect any currently selected star if it doesn't match the search
-            if (selectedStar) {
-                const selectedPageData = selectedStar.userData.page;
-                 const isSelectedMatch = selectedPageData.displayName.toLowerCase().includes(searchTerm) ||
-                                         selectedPageData.name.toLowerCase().includes(searchTerm) ||
-                                         selectedPageData.description.toLowerCase().includes(searchTerm) ||
-                                         selectedPageData.version.toLowerCase().includes(searchTerm);
-                if (!isSelectedMatch) {
-                    deselectStar();
-                }
-            }
-        }
-
-        // --- Star Selection Logic ---
-        function selectStar(starGroup) {
-            // Deselect previous star if any
-            if (selectedStar) {
-                selectedStar.children[0].material.color.set(0x00b4ff); // Reset main star color
-                 // Remove 'selected' class from previous list item
-                const prevListItem = pageListElement.querySelector(`li[data-page-name="${selectedStar.userData.page.name}"]`);
-                if (prevListItem) {
-                    prevListItem.classList.remove('selected');
-                }
-            }
-
-            // Select the new star group
-            selectedStar = starGroup;
-            selectedStar.children[0].material.color.set(0xff00ff); // Highlight main star color (e.g., magenta)
-
-            // Add 'selected' class to the corresponding list item
-            const listItem = pageListElement.querySelector(`li[data-page-name="${starGroup.userData.page.name}"]`);
-            if (listItem) {
-                listItem.classList.add('selected');
-                // Scroll the list to make the selected item visible
-                listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-
-            // Hide the main overlay
-            overlayElement.classList.add('hidden');
-
-            // Populate and show the selected star details overlay
-            detailsPageNameElement.textContent = starGroup.userData.page.displayName; // Use displayName
-            detailsPageVersionElement.textContent = `Version: ${starGroup.userData.page.version}`; // Display version
-            detailsPageDescriptionElement.textContent = starGroup.userData.page.description;
-            // Update travel button text and URL (use original name for URL)
-            travelButton.textContent = `Travel to ${starGroup.userData.page.displayName}`;
-            travelButton.onclick = (event) => {
-                 event.preventDefault(); // Prevent default button click behavior
-                 initiateWormholeTravel(`/${starGroup.userData.page.name.toLowerCase().replace(/\s+/g, '-')}`);
-            };
-            selectedStarDetailsElement.classList.add('visible');
-
-
-            // Animate camera to focus on the selected star (only if TWEEN is defined)
-            if (typeof TWEEN !== 'undefined') {
-                 // Store current camera position and controls target
-                const currentCameraPosition = camera.position.clone();
-                const currentControlsTarget = controls.target.clone();
-
-                // Calculate the desired camera position relative to the star
-                // This position will be used as an intermediate step before orbiting
-                const cameraOffset = new THREE.Vector3(-15, 0, 10); // Offset to the left and slightly forward
-                const intermediateCameraPosition = selectedStar.position.clone().add(cameraOffset);
-
-                // Animate the camera position to the intermediate position
-                new TWEEN.Tween(currentCameraPosition)
-                    .to(intermediateCameraPosition, 1000) // Animation duration
-                    .easing(TWEEN.Easing.Quadratic.InOut)
-                    .onUpdate(() => {
-                        camera.position.copy(currentCameraPosition);
-                         // Keep looking at the star during the initial movement
-                        camera.lookAt(selectedStar.position);
-                    })
-                    .onComplete(() => {
-                        // After reaching the intermediate position, animate the controls target
-                        // This creates the orbiting effect
-                        new TWEEN.Tween(currentControlsTarget)
-                            .to(selectedStar.position, 1000) // Animation duration for target
-                            .easing(TWEEN.Easing.Quadratic.InOut)
-                            .onUpdate(() => {
-                                controls.target.copy(currentControlsTarget);
-                            })
-                            .onComplete(() => {
-                                // Re-enable controls after all animations
-                                controls.enabled = true;
-                                isAnimatingCamera = false;
-                                 // Ensure camera is looking at the star at the end
-                                camera.lookAt(selectedStar.position);
-                            })
-                            .start();
-                    })
-                    .start();
-
-                // Disable controls during animation
-                controls.enabled = false;
-                isAnimatingCamera = true;
-
+            if (searchTerm.length > 0) {
+                clearSearchButton.classList.add('visible');
             } else {
-                 console.warn("TWEEN is not defined. Camera animation to selected star skipped.");
-                 // If TWEEN is not available, just set the camera position and target directly
-                 const offset = new THREE.Vector3(-15, 0, 10);
-                 camera.position.copy(selectedStar.position).add(offset);
-                 camera.lookAt(selectedStar.position);
-                 controls.target.copy(selectedStar.position); // Update controls target as well
+                clearSearchButton.classList.remove('visible');
+            }
+
+            const filteredProjects = projects.filter(project =>
+                project.name.toLowerCase().includes(searchTerm) ||
+                project.description.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredProjects.length > 0) {
+                filteredProjects.forEach(project => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = project.name;
+                    listItem.dataset.projectId = project.id;
+                    searchResultsList.appendChild(listItem);
+                });
+            } else {
+                 const noResultsItem = document.createElement('li');
+                 noResultsItem.textContent = 'No results found';
+                 noResultsItem.style.cssText = 'font-style: italic; color: #aaa; cursor: default;';
+                 searchResultsList.appendChild(noResultsItem);
+            }
+
+            // Update planet highlighting
+            planetMeshes.forEach(planet => {
+                const projectData = planetDataMap.get(planet);
+                if (projectData) {
+                    const match = projectData.name.toLowerCase().includes(searchTerm) ||
+                                  projectData.description.toLowerCase().includes(searchTerm);
+                    if (originalPlanetColors.has(planet)) {
+                        planet.material.color.set(originalPlanetColors.get(planet));
+                    }
+                    if (searchTerm !== '' && !match) {
+                        planet.material.color.set(0x444444); // Dim non-matching planets
+                    } else if (searchTerm !== '' && match) {
+                         planet.material.color.set(0xa78bfa); /* Highlight matching planets with violet */
+                    }
+                }
+            });
+        }
+
+        function onSearchInputKeydown(event) {
+            const results = searchResultsList.querySelectorAll('li');
+            const numResults = results.length;
+
+            if (numResults === 0 || (results[0] && results[0].style.cursor === 'default')) {
+                if (event.key === 'Escape' && searchContainer.classList.contains('expanded')) {
+                     collapseSearch();
+                }
+                return;
+            }
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (selectedSearchResultIndex < numResults - 1) {
+                    if (selectedSearchResultIndex >= 0) {
+                        results[selectedSearchResultIndex].classList.remove('selected');
+                    }
+                    selectedSearchResultIndex++;
+                    results[selectedSearchResultIndex].classList.add('selected');
+                    results[selectedSearchResultIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (selectedSearchResultIndex > 0) {
+                     if (selectedSearchResultIndex >= 0) {
+                        results[selectedSearchResultIndex].classList.remove('selected');
+                    }
+                    selectedSearchResultIndex--;
+                    results[selectedSearchResultIndex].classList.add('selected');
+                    results[selectedSearchResultIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else if (selectedSearchResultIndex === 0) {
+                     results[selectedSearchResultIndex].classList.remove('selected');
+                     selectedSearchResultIndex = -1;
+                }
+            } else if (event.key === 'Enter') {
+                if (selectedSearchResultIndex >= 0 && selectedSearchResultIndex < numResults) {
+                    results[selectedSearchResultIndex].click();
+                }
+            } else if (event.key === 'Escape') {
+                 if (searchContainer.classList.contains('expanded')) {
+                     collapseSearch();
+                 }
             }
         }
 
-        function deselectStar() {
-            if (selectedStar) {
-                selectedStar.children[0].material.color.set(0x00b4ff); // Reset main star color
-                 // Remove 'selected' class from the list item
-                const listItem = pageListElement.querySelector(`li[data-page-name="${selectedStar.userData.page.name}"]`);
-                if (listItem) {
-                    listItem.classList.remove('selected');
-                }
-                selectedStar = null;
-
-                // Hide the selected star details overlay
-                selectedStarDetailsElement.classList.remove('visible');
-
-                // Show the main overlay
-                overlayElement.classList.remove('hidden');
-
-
-                 // Animate camera back to a default view or allow controls to take over (only if TWEEN is defined)
-                if (!isAnimatingCamera && typeof TWEEN !== 'undefined') {
-                    // Animate camera position and controls target back to initial state
-                    const initialCameraPosition = new THREE.Vector3(0, 0, 50);
-                    const initialControlsTarget = new THREE.Vector3(0, 0, 0);
-
-                    new TWEEN.Tween(camera.position)
-                        .to(initialCameraPosition, 1000) // Animation duration
-                        .easing(TWEEN.Easing.Quadratic.InOut)
-                        .start();
-
-                     new TWEEN.Tween(controls.target)
-                        .to(initialControlsTarget, 1000) // Animation duration
-                        .easing(TWEEN.Easing.Quadratic.InOut)
-                         .onComplete(() => {
-                             // Ensure camera is looking towards the center
-                             camera.lookAt(initialControlsTarget);
-                         })
-                        .start();
-
-                } else if (!isAnimatingCamera) {
-                     console.warn("TWEEN is not defined. Camera animation on deselect skipped.");
-                     // If TWEEN is not available, just reset camera position and lookAt
-                     camera.position.set(0, 0, 50);
-                     camera.lookAt(new THREE.Vector3(0, 0, 0));
-                     controls.target.copy(new THREE.Vector3(0, 0, 0));
+        function onSearchResultClick(event) {
+            const clickedItem = event.target.closest('li');
+            if (clickedItem && clickedItem.dataset.projectId) {
+                const projectId = clickedItem.dataset.projectId;
+                const projectData = projects.find(p => p.id === projectId);
+                if (projectData) {
+                    const planetMesh = planetMeshes.find(mesh => mesh.userData.projectId === projectId);
+                    if (planetMesh) {
+                        focusOnPlanet(planetMesh);
+                        searchInput.value = projectData.name;
+                        searchResultsList.innerHTML = '';
+                        selectedSearchResultIndex = -1;
+                        resetPlanetColors();
+                        collapseSearch();
+                    }
                 }
             }
         }
 
-         // --- Initiate Wormhole Travel Animation and Redirect ---
-        function initiateWormholeTravel(url) {
-            // Clear any existing star streaks
-            wormholeOverlayElement.innerHTML = '';
-
-            // Generate star streaks dynamically
-            const numberOfStreaks = 100; // Adjust for desired density
-            for (let i = 0; i < numberOfStreaks; i++) {
-                const streak = document.createElement('div');
-                streak.classList.add('star-streak');
-
-                // Random position near the center
-                const x = 50 + (Math.random() - 0.5) * 20; // Random x between 40% and 60%
-                const y = 50 + (Math.random() - 0.5) * 20; // Random y between 40% and 60%
-                streak.style.left = `${x}%`;
-                streak.style.top = `${y}%`;
-
-                // Random initial size and animation delay
-                const size = 1 + Math.random() * 3; // Random size between 1px and 4px
-                streak.style.width = `${size}px`;
-                streak.style.height = `${size}px`;
-                streak.style.animationDelay = `${Math.random() * 0.5}s`; // Random delay
-
-                wormholeOverlayElement.appendChild(streak);
+        // --- Search Result Hover Handlers ---
+        function onSearchResultMouseOver(event) {
+            const hoveredItem = event.target.closest('li');
+            // Ensure we are hovering over a list item with a project ID
+            if (hoveredItem && hoveredItem.dataset.projectId) {
+                const projectId = hoveredItem.dataset.projectId;
+                const projectData = projects.find(p => p.id === projectId);
+                if (projectData) {
+                    // Position tooltip relative to the hovered list item
+                    const rect = hoveredItem.getBoundingClientRect();
+                    // Pass projectData directly to showTooltip
+                    showTooltip(projectData, rect.right + 10, rect.top); // Position to the right of the item
+                }
             }
+        }
+
+        function onSearchResultMouseOut(event) {
+             // Check if the mouse is still within the search results list or the tooltip itself
+             const isLeavingList = !searchResultsList.contains(event.relatedTarget);
+             const isEnteringTooltip = tooltip.contains(event.relatedTarget);
+
+             if (isLeavingList && !isEnteringTooltip) {
+                hideTooltip();
+             }
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            onSearchInput({ target: searchInput });
+            searchInput.focus();
+        }
+
+        function resetPlanetColors() {
+            planetMeshes.forEach(planet => {
+                if (originalPlanetColors.has(planet)) {
+                    planet.material.color.set(originalPlanetColors.get(planet));
+                }
+            });
+        }
+
+        // --- UI Functions ---
+        // Modified showTooltip to accept data object and position
+        function showTooltip(data, x, y) {
+             // Check if the data is a Three.js mesh (from planet hover) or a project object (from search hover)
+            const projectData = data && data.isMesh ? planetDataMap.get(data) : data;
+
+            if (projectData) {
+                tooltip.innerHTML = `<strong>${projectData.name}</strong><br>Version: ${projectData.version}<br>${projectData.description}`;
+                // Adjust tooltip position to stay within viewport if needed
+                let tooltipX = x;
+                let tooltipY = y;
+                const tooltipRect = tooltip.getBoundingClientRect();
+
+                // Prevent tooltip from going off the right edge
+                if (tooltipX + tooltipRect.width > window.innerWidth - 10) {
+                    tooltipX = window.innerWidth - tooltipRect.width - 10;
+                }
+                 // Prevent tooltip from going off the bottom edge
+                 if (tooltipY + tooltipRect.height > window.innerHeight - 10) {
+                     tooltipY = window.innerHeight - tooltipRect.height - 10;
+                 }
+                 // Prevent going off left edge
+                 if (tooltipX < 10) tooltipX = 10;
+                 // Prevent going off top edge
+                 if (tooltipY < 10) tooltipY = 10;
 
 
-            // Show the wormhole overlay and activate its animation/transition
-            wormholeOverlayElement.classList.add('active');
+                tooltip.style.left = tooltipX + 'px';
+                tooltip.style.top = tooltipY + 'px';
+                tooltip.classList.add('visible');
+            } else {
+                 // If no project data is found, hide the tooltip
+                 hideTooltip();
+            }
+        }
 
-            // Wait for the animation to play before redirecting
-            // The timeout should match or be slightly less than the transition duration
+        function hideTooltip() {
+            tooltip.classList.remove('visible');
+        }
+
+        function openSideMenu(projectData) {
+            menuProjectName.textContent = projectData.name;
+            menuProjectLink.textContent = projectData.link;
+            menuProjectLink.href = projectData.link;
+            menuProjectVersion.textContent = projectData.version;
+            menuProjectDescription.textContent = projectData.description;
+            travelButton.textContent = `Travel to ${projectData.name}`;
+            sideMenu.classList.add('open');
+            controls.enabled = false; // Disable controls when menu is open
+
+             // Calculate and store the camera offset relative to the planet when the menu opens
+            if (focusedPlanet) {
+                 const targetPosition = new THREE.Vector3();
+                 focusedPlanet.getWorldPosition(targetPosition);
+                 cameraOffset.copy(camera.position).sub(targetPosition);
+            }
+        }
+
+        function closeSideMenu() {
+            sideMenu.classList.remove('open');
+            focusedPlanet = null; // Clear focused planet when menu closes
+            resetPlanetColors();
+            controls.enabled = true; // Re-enable controls when menu closes
+        }
+
+        function expandSearch() {
+            searchContainer.classList.add('expanded');
+            controls.enabled = false; // Disable controls when search is open
+            onSearchInput({ target: searchInput });
+        }
+
+        function collapseSearch() {
             setTimeout(() => {
-                window.location.href = url;
-            }, 1500); // Redirect after 1500ms (adjust based on CSS animation duration)
+                // Only collapse if the input is not focused and the menu is not open
+                if (!searchInput.contains(document.activeElement) && !sideMenu.classList.contains('open')) {
+                    searchContainer.classList.remove('expanded');
+                    searchInput.value = '';
+                    searchResultsList.innerHTML = '';
+                    clearSearchButton.classList.remove('visible');
+                    selectedSearchResultIndex = -1;
+                    resetPlanetColors();
+                    controls.enabled = true; // Re-enable controls
+                }
+            }, 100); // Small delay to allow for focus change
+        }
+
+        // --- Camera Focus Animation ---
+        function focusOnPlanet(planet) {
+            if (focusedPlanet === planet || isAnimatingFocus) return;
+            isAnimatingFocus = true;
+            focusedPlanet = planet;
+            hideTooltip();
+
+            const targetPosition = new THREE.Vector3();
+            planet.getWorldPosition(targetPosition);
+            // Adjust offset for a better view when focusing
+            const offset = new THREE.Vector3(0, 5, 15);
+            const finalCameraPosition = new THREE.Vector3().addVectors(targetPosition, offset);
+
+            const startPosition = camera.position.clone();
+            const startLookAt = controls.target.clone();
+
+            const duration = 1000; // Animation duration in milliseconds
+            const startTime = performance.now();
+
+            function animateFocus(currentTime) {
+                const elapsedTime = currentTime - startTime;
+                const progress = Math.min(elapsedTime / duration, 1);
+
+                // Interpolate camera position and target
+                camera.position.lerpVectors(startPosition, finalCameraPosition, progress);
+                controls.target.lerpVectors(startLookAt, targetPosition, progress);
+                controls.update(); // Update controls to apply the new target
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateFocus);
+                } else {
+                    isAnimatingFocus = false;
+                    // Open the side menu once the focus animation is complete
+                    const projectData = planetDataMap.get(planet);
+                    if (projectData) {
+                        openSideMenu(projectData);
+                    }
+                }
+            }
+            requestAnimationFrame(animateFocus); // Start the animation loop
+        }
+
+        // --- Wormhole Animation (New Three.js based) ---
+        let wormholeAnimationScene, wormholeAnimationCamera, wormholeParticles, wormholeParticleGeometry, wormholeParticleMaterial;
+        let wormholeMouseX = 0, wormholeMouseY = 0;
+        let wormholeWindowHalfX = window.innerWidth / 2;
+        let wormholeWindowHalfY = window.innerHeight / 2;
+        // Removed wormholeAnimationId as we are using the main currentAnimationId
+        // isWormholeAnimating flag will control rendering
+
+        // Define the desired colors (light shades of cyan, pink, magenta)
+        // Using HSL: Hue (0-1), Saturation (0-1), Lightness (0-1)
+        // High lightness (e.g., 0.8-0.9) makes them light.
+        // Hues: Cyan ~0.5, Pink ~0.9-1.0/0, Magenta ~0.8-0.9
+        const colorsHSL = [
+            { h: 0.55, s: 1.0, l: 0.9 }, // Light Cyan
+            { h: 0.95, s: 1.0, l: 0.9 }, // Light Pink (closer to red/magenta end)
+            { h: 0.85, s: 1.0, l: 0.9 }  // Light Magenta
+        ];
+
+        // Function to get a random color from the defined list
+        function getRandomColorHSL() {
+            const index = Math.floor(Math.random() * colorsHSL.length);
+            return colorsHSL[index];
+        }
+
+        // Define tunnel parameters
+        const innerRadius = 50; // Inner radius of the donut hole
+        const outerRadius = 200; // Outer radius of the donut
+        const startZ = -2000; // New start position of the tunnel (further back)
+        const endZ = 500;     // End position of the tunnel (same as before)
+        const tunnelDepth = endZ - startZ; // Total depth of the tunnel
+
+        // Function to initialize the wormhole animation scene
+        function initWormholeAnimation() {
+            console.log("Initializing wormhole animation...");
+            // Increased particle count
+            const particleCount = 50000;
+            console.log("Particle count:", particleCount);
+
+            // Create a new scene for the wormhole
+            wormholeAnimationScene = new THREE.Scene();
+            // Set background color to black (relying on body background)
+            // wormholeAnimationScene.background = new THREE.Color(0x000000); // Or just leave it null
+
+            // Set up the camera for the wormhole
+            wormholeAnimationCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000); // Increased far plane
+            // Position the camera behind the start of the tunnel and look forward
+            wormholeAnimationCamera.position.z = startZ - 100; // Position camera behind the start of particles
+            wormholeAnimationCamera.lookAt(new THREE.Vector3(0, 0, 0)); // Look towards the center of the tunnel
+            console.log("Wormhole camera initial position:", wormholeAnimationCamera.position.z);
+
+
+            // Create particle geometry
+            wormholeParticleGeometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const velocities = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3); // Array to store colors
+            const sizes = new Float32Array(particleCount); // Array to store sizes
+
+            console.log("Starting particle generation loop...");
+            // Generate random positions, velocities, colors, and sizes for particles
+            for (let i = 0; i < particleCount; i++) {
+                // Position particles in a donut (ring) shape around the Z axis
+                const angle = Math.random() * Math.PI * 2;
+                // Distribute particles between inner and outer radius
+                const radius = innerRadius + Math.random() * (outerRadius - innerRadius);
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                // Distribute along the new tunnel depth
+                const z = startZ + Math.random() * tunnelDepth;
+
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+
+                // Initial velocity - moving towards NEGATIVE Z (towards camera)
+                velocities[i * 3] = 0;
+                velocities[i * 3 + 1] = 0;
+                velocities[i * 3 + 2] = -30; // Increased speed significantly more
+            }
+             console.log("Particle generation loop finished. Generated", particleCount, "particles.");
+
+
+            wormholeParticleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            wormholeParticleGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+            wormholeParticleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3)); // Add color attribute
+            wormholeParticleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1)); // Add size attribute
+            console.log("Particle geometry attributes set.");
+
+
+            // Create particle material
+            // Use ShaderMaterial for more control over size and potentially glow
+            wormholeParticleMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    // uniforms can be used to pass data that is the same for all particles
+                    // (e.g., a texture, time)
+                },
+                vertexShader: `
+                    attribute float size; // Receive size attribute
+                    attribute vec3 color; // Receive color attribute
+                    varying vec3 vColor; // Pass color to fragment shader
+
+                    void main() {
+                        vColor = color; // Pass color through
+                        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+                        // Project the point and scale size based on distance
+                        // Increase the base size multiplier for larger points/trails
+                        gl_PointSize = size * ( 400.0 / -mvPosition.z ); // Note: mvPosition.z is negative in front of camera
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor; // Receive color from vertex shader
+
+                    void main() {
+                        // Simple circular glow effect
+                        float strength = distance(gl_PointCoord, vec2(0.5, 0.5));
+                        strength = 1.0 - strength; // Invert so center is strongest
+                        strength = pow(strength, 3.0); // Increase power for a softer falloff and more central brightness
+
+                        gl_FragColor = vec4( vColor * strength, strength ); // Apply color and alpha based on strength
+                    }
+                `,
+                blending: THREE.AdditiveBlending, // For brighter stars and glow effect
+                depthTest: false, // Disable depth test for additive blending
+                transparent: true // Enable transparency
+            });
+             console.log("Particle material created.");
+
+
+            // Create the particle system
+            wormholeParticles = new THREE.Points(wormholeParticleGeometry, wormholeParticleMaterial);
+            wormholeAnimationScene.add(wormholeParticles);
+            console.log("Particle system added to wormhole scene.");
+
+            console.log("Wormhole animation initialized.");
+        }
+
+        // Handle mouse movement specifically for the wormhole camera control
+        function onWormholeMouseMove(event) {
+             wormholeMouseX = (event.clientX - wormholeWindowHalfX);
+             wormholeMouseY = (event.clientY - wormholeWindowHalfY);
         }
 
 
-        // --- Check if mouse is within a rectangle ---
-        function isMouseInRect(mouseX, mouseY, rect) {
-            return mouseX > rect.left && mouseX < rect.right &&
-                   mouseY > rect.top && mouseY < rect.bottom;
+        // Function to start the wormhole animation
+        function startWormholeAnimation(linkToOpen) { // Accept link as parameter
+            console.log("Attempting to start wormhole animation...");
+
+            // Disable main controls
+            controls.enabled = false;
+            console.log("Main controls disabled.");
+
+            // Hide main UI elements
+            searchContainer.style.display = 'none';
+            sideMenu.classList.remove('open'); // Ensure menu is closed
+            sideMenu.style.display = 'none';
+            tooltip.classList.remove('visible'); // Hide tooltip
+
+
+            // Initialize the wormhole animation scene and particles
+            initWormholeAnimation();
+
+            // Set the flag to render the wormhole scene in the main animate loop
+            isWormholeAnimating = true;
+            console.log("isWormholeAnimating set to true.");
+
+            // Record the start time for UI updates
+            wormholeStartTime = performance.now();
+            currentMessageIndex = 0; // Reset message index
+            travelTextElement.textContent = travelMessages[0]; // Set initial message
+            progressBarElement.style.width = '0%'; // Reset progress bar
+
+            // Show wormhole UI and Skip button
+            wormholeUI.style.display = 'flex'; // Use flex for UI container
+            wormholeUI.classList.add('active'); // Add active class to enable pointer events
+            skipButton.style.display = 'block';
+
+
+            // The animation cleanup and UI reset will happen after the duration
+            setTimeout(() => {
+                console.log("Wormhole animation duration finished.");
+                stopWormholeAnimation(); // Stop the wormhole animation
+
+                // Open the link after the animation finishes
+                if (linkToOpen) {
+                    window.open(linkToOpen, '_blank');
+                } else {
+                    console.warn("Animation finished, but no link was provided to open.");
+                }
+
+                 // Add a slight delay before resetting main scene UI after animation
+                 setTimeout(() => {
+                    hideTooltip();
+                    closeSideMenu();
+                    focusedPlanet = null;
+                    isAnimatingFocus = false;
+                    controls.enabled = true; // Re-enable controls
+                 }, 500); // Short delay
+
+            }, wormholeDuration); // Use the defined duration
+        }
+
+        // Function to stop the wormhole animation and clean up
+        function stopWormholeAnimation() {
+             console.log("Stopping wormhole animation...");
+
+             // Set the flag to stop rendering the wormhole scene
+             isWormholeAnimating = false;
+             console.log("isWormholeAnimating set to false.");
+
+             // Hide wormhole UI and Skip button
+             wormholeUI.style.display = 'none';
+             wormholeUI.classList.remove('active'); // Remove active class to disable pointer events
+             skipButton.style.display = 'none';
+
+
+             // Dispose of Three.js wormhole resources
+             if (wormholeAnimationScene) {
+                 console.log("Disposing wormhole scene resources...");
+                 while (wormholeAnimationScene.children.length > 0) {
+                     const child = wormholeAnimationScene.children[0];
+                     wormholeAnimationScene.remove(child);
+                     if (child.geometry) {
+                         child.geometry.dispose();
+                         console.log("Disposed wormhole geometry.");
+                     }
+                     if (child.material) {
+                         if (child.material.map) child.material.map.dispose();
+                         child.material.dispose();
+                         console.log("Disposed wormhole material.");
+                     }
+                 }
+                 console.log("Cleared wormhole scene children.");
+             }
+
+             // Nullify references
+             wormholeAnimationScene = null;
+             wormholeAnimationCamera = null;
+             wormholeParticles = null;
+             wormholeParticleGeometry = null;
+             wormholeParticleMaterial = null;
+             console.log("Wormhole scene references nulled.");
+
+
+             console.log("Wormhole overlay logic removed.");
+
+
+             // Re-enable main controls and show main UI
+             controls.enabled = true;
+             searchContainer.style.display = 'flex'; // Show search container (assuming it's flex)
+             sideMenu.style.display = 'block'; // Show side menu (assuming it's block)
+             console.log("Main controls re-enabled and UI shown.");
+
+
+             console.log("Main animation should resume automatically.");
+             // The main animate loop is already running and will now render the main scene
         }
 
 
-        // --- Initialize the scene when the window loads ---
-        window.onload = init;
-
+        // Initial Setup
+        onWindowResize();
+        animate(performance.now()); // Start the main animation loop initially, pass initial time
     </script>
 </body>
 </html>
