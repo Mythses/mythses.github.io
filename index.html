@@ -15,6 +15,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -30,229 +31,219 @@
         }
 
         /* Custom Scrollbar Styles (for Webkit browsers) */
-        /* Target the scrollbar itself */
         ::-webkit-scrollbar {
-            width: 10px; /* Width of the scrollbar */
+            width: 10px;
         }
-
-        /* Track */
         ::-webkit-scrollbar-track {
-            background: rgba(10, 0, 20, 0.3); /* Transparent dark purple track */
+            background: rgba(10, 0, 20, 0.3);
             border-radius: 10px;
         }
-
-        /* Handle (Thumb) */
         ::-webkit-scrollbar-thumb {
-            background: rgba(150, 50, 200, 0.6); /* Transparent purple thumb */
+            background: rgba(150, 50, 200, 0.6);
             border-radius: 10px;
-            border: 1px solid rgba(150, 50, 200, 0.8); /* Subtle border */
+            border: 1px solid rgba(150, 50, 200, 0.8);
         }
-
-        /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(150, 50, 200, 0.8); /* More opaque purple on hover */
+            background: rgba(150, 50, 200, 0.8);
         }
-
 
         #tooltip {
             position: absolute;
-            background-color: rgba(10, 0, 20, 0.6); /* Very dark transparent with purple hint */
+            background-color: rgba(10, 0, 20, 0.6);
             color: #fff;
-            padding: 12px 18px; /* Slightly more padding */
-            border-radius: 12px; /* Match search/menu rounded corners */
-            pointer-events: none; /* Allows mouse events to pass through to canvas */
+            padding: 12px 18px;
+            border-radius: 12px;
+            pointer-events: none;
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
             z-index: 10;
-            max-width: 280px; /* Increased max width */
-            box-shadow: 0 6px 15px rgba(50, 0, 80, 0.4); /* Subtle purple shadow */
-            line-height: 1.6; /* Improved readability */
-            font-size: 1em; /* Slightly larger font for tooltip */
-            border: 1px solid rgba(150, 50, 200, 0.3); /* Subtle purple border */
+            max-width: 280px;
+            box-shadow: 0 6px 15px rgba(50, 0, 80, 0.4);
+            line-height: 1.6;
+            font-size: 1em;
+            border: 1px solid rgba(150, 50, 200, 0.3);
         }
         #tooltip.visible {
             opacity: 1;
         }
         #tooltip strong {
-            color: #a78bfa; /* Tailwind violet-400 for accent */
+            color: #a78bfa;
             font-weight: 700;
         }
 
         /* Floating Menu Styles */
         #side-menu {
-            position: absolute; /* Change to absolute for floating */
-            bottom: 20px; /* Position from the bottom */
-            left: 50%; /* Center horizontally */
-            transform: translateX(-50%) scale(0.9); /* Initial scale and centering */
-            width: 350px; /* Fixed width */
-            max-height: 400px; /* Max height with scrolling */
-            background-color: rgba(10, 0, 20, 0.6); /* Very dark transparent with purple hint */
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            width: 350px;
+            max-height: 400px;
+            background-color: rgba(10, 0, 20, 0.6);
             color: #fff;
-            padding: 20px 25px; /* Padding */
-            box-shadow: 0 8px 25px rgba(50, 0, 80, 0.5); /* Purple shadow */
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; /* Transition for fade/scale */
+            padding: 20px 25px;
+            box-shadow: 0 8px 25px rgba(50, 0, 80, 0.5);
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
             z-index: 20;
-            overflow-y: auto; /* Allow scrolling if content is long */
-            border-radius: 15px; /* Rounded corners on all sides */
-            border: 1px solid rgba(150, 50, 200, 0.3); /* Subtle purple border */
-            opacity: 0; /* Hidden by default */
-            pointer-events: none; /* Don't block clicks when hidden */
+            overflow-y: auto;
+            border-radius: 15px;
+            border: 1px solid rgba(150, 50, 200, 0.3);
+            opacity: 0;
+            pointer-events: none;
         }
         #side-menu.open {
-            opacity: 1; /* Make visible */
-            pointer-events: auto; /* Enable clicks when visible */
-            transform: translateX(-50%) scale(1); /* Scale up to normal size */
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) scale(1);
         }
         #side-menu h2 {
-            font-size: 1.8em; /* Heading size */
-            margin-bottom: 15px; /* Margin below heading */
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
-            padding-bottom: 10px; /* Padding below border */
-            color: #a78bfa; /* Tailwind violet-400 for accent */
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            color: #a78bfa;
             font-weight: 700;
         }
         #side-menu p {
-            margin-bottom: 12px; /* Margin below paragraphs */
-            line-height: 1.6; /* Improved readability */
-            font-size: 1em; /* Text size */
+            margin-bottom: 12px;
+            line-height: 1.6;
+            font-size: 1em;
         }
         #side-menu strong {
-             color: rgba(255, 255, 255, 0.9); /* Slightly brighter label text */
+             color: rgba(255, 255, 255, 0.9);
              font-weight: 600;
         }
         #side-menu a {
-            color: #c4b5fd; /* Tailwind violet-300 for links */
+            color: #c4b5fd;
             text-decoration: none;
             transition: color 0.2s ease-in-out;
         }
         #side-menu a:hover {
-            color: #ddd6fe; /* Tailwind violet-200 on hover */
+            color: #ddd6fe;
             text-decoration: underline;
         }
         #close-menu {
             position: absolute;
-            top: 10px; /* Position from top of menu */
-            right: 10px; /* Position from right of menu */
+            top: 10px;
+            right: 10px;
             background: none;
             border: none;
-            color: rgba(255, 255, 255, 0.8); /* Subtle color */
-            font-size: 1.8em; /* Close button size */
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.8em;
             cursor: pointer;
             transition: color 0.2s ease-in-out;
         }
         #close-menu:hover {
-            color: #fff; /* White on hover */
+            color: #fff;
         }
         #travel-button {
             display: block;
             width: 100%;
-            padding: 14px; /* Padding */
-            background-color: rgba(147, 51, 234, 0.7); /* Transparent purple-600 */
+            padding: 14px;
+            background-color: rgba(147, 51, 234, 0.7);
             color: white;
-            border: 1px solid rgba(150, 50, 200, 0.5); /* Subtle purple border */
-            border-radius: 10px; /* Rounded corners */
+            border: 1px solid rgba(150, 50, 200, 0.5);
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 1.2em; /* Font size */
-            margin-top: 20px; /* Margin above button */
+            font-size: 1.2em;
+            margin-top: 20px;
             transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            box-shadow: 0 4px 10px rgba(50, 0, 80, 0.3); /* Subtle purple shadow */
+            box-shadow: 0 4px 10px rgba(50, 0, 80, 0.3);
             font-weight: 600;
         }
         #travel-button:hover {
-            background-color: rgba(126, 34, 206, 0.8); /* Darker purple on hover */
-            box-shadow: 0 6px 12px rgba(50, 0, 80, 0.4); /* More prominent shadow on hover */
+            background-color: rgba(126, 34, 206, 0.8);
+            box-shadow: 0 6px 12px rgba(50, 0, 80, 0.4);
         }
         #travel-button:active {
-             background-color: rgba(109, 40, 184, 0.9); /* Even darker red on active */
+             background-color: rgba(109, 40, 184, 0.9);
              box-shadow: 0 2px 5px rgba(50, 0, 80, 0.5);
         }
 
-
-        /* --- Revamped Search Bar Styling --- */
+        /* Search Bar Styles */
         #search-container {
-            position: fixed; /* Use fixed to keep it in the viewport */
-            top: 40px; /* Increased space from the top */
+            position: fixed;
+            top: 40px;
             left: 50%;
             transform: translateX(-50%);
-            width: 95%; /* Use a larger percentage for responsiveness */
-            max-width: 600px; /* Increased max width */
-            background-color: rgba(10, 0, 20, 0.6); /* Very dark transparent with purple hint */
-            padding: 0px 0px; /* Increased padding */
+            width: 95%;
+            max-width: 600px;
+            background-color: rgba(10, 0, 20, 0.6);
+            padding: 0px 0px;
             z-index: 30;
             display: flex;
             flex-direction: column;
             align-items: center;
             overflow: hidden;
-            max-height: 70px; /* Adjusted initial collapsed height */
-            transition: max-height 0.5s ease-in-out, box-shadow 0.5s ease-in-out, background-color 0.3s ease-in-out; /* Smoother transition */
-            border-radius: 30px; /* More rounded corners on all sides */
-            box-shadow: 0 6px 15px rgba(50, 0, 80, 0.4); /* Subtle purple shadow even when collapsed */
-            border: 1px solid rgba(150, 50, 200, 0.3); /* Subtle purple border */
+            max-height: 70px;
+            transition: max-height 0.5s ease-in-out, box-shadow 0.5s ease-in-out, background-color 0.3s ease-in-out;
+            border-radius: 30px;
+            box-shadow: 0 6px 15px rgba(50, 0, 80, 0.4);
+            border: 1px solid rgba(150, 50, 200, 0.3);
         }
          #search-container.expanded {
-            max-height: 90vh; /* Increased expanded height to prevent cutoff */
-            overflow-y: auto; /* Add scroll if content exceeds max height */
-            background-color: rgba(10, 0, 20, 0.8); /* Slightly less transparent when expanded */
-            box-shadow: 0 15px 40px rgba(50, 0, 80, 0.6); /* More prominent purple shadow when open */
+            max-height: 90vh;
+            overflow-y: auto;
+            background-color: rgba(10, 0, 20, 0.8);
+            box-shadow: 0 15px 40px rgba(50, 0, 80, 0.6);
          }
 
         #search-input-wrapper {
-            position: relative; /* Needed for positioning the clear button */
+            position: relative;
             width: 100%;
-            margin-bottom: 0; /* Remove bottom margin when collapsed */
-            transition: margin-bottom 0.5s ease-in-out; /* Transition margin */
+            margin-bottom: 0;
+            transition: margin-bottom 0.5s ease-in-out;
         }
 
         #search-container.expanded #search-input-wrapper {
-             margin-bottom: 0px; /* Add margin when expanded */
+             margin-bottom: 0px;
         }
 
         #search-input {
-            padding: 14px 45px 14px 20px; /* Increased padding, space for clear button */
-            border-radius: 28px; /* More pill shape */
-            border: 1px solid rgba(150, 50, 200, 0.5); /* Subtle purple border */
-            width: 100%; /* Full width within wrapper */
-            background-color: rgba(255, 255, 255, 0.05); /* More transparent input */
-            color: #fff; /* White text in input */
+            padding: 14px 45px 14px 20px;
+            border-radius: 28px;
+            border: 1px solid rgba(150, 50, 200, 0.5);
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #fff;
             font-size: 1.1em;
-            outline: none; /* Remove default outline */
+            outline: none;
             transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
         }
         #search-input::placeholder {
-            color: rgba(255, 255, 255, 0.6); /* Lighter placeholder text */
+            color: rgba(255, 255, 255, 0.6);
         }
          #search-input:focus {
              background-color: rgba(255, 255, 255, 0.1);
              border-color: rgba(150, 50, 200, 0.8);
-             box-shadow: 0 0 10px rgba(150, 50, 200, 0.5); /* Subtle purple focus glow */
+             box-shadow: 0 0 10px rgba(150, 50, 200, 0.5);
          }
 
         #clear-search {
             position: absolute;
             top: 50%;
-            right: 15px; /* Position inside the input */
+            right: 15px;
             transform: translateY(-50%);
             background: none;
             border: none;
             color: rgba(255, 255, 255, 0.7);
-            font-size: 1.3em; /* Slightly larger */
+            font-size: 1.3em;
             cursor: pointer;
-            padding: 5px; /* Make clickable area larger */
-            opacity: 0; /* Hidden by default */
-            pointer-events: none; /* Don't block input clicks */
+            padding: 5px;
+            opacity: 0;
+            pointer-events: none;
             transition: color 0.2s ease-in-out, opacity 0.2s ease-in-out;
         }
         #clear-search.visible {
             opacity: 1;
-            pointer-events: auto; /* Enable clicks when visible */
+            pointer-events: auto;
         }
         #clear-search:hover {
             color: #fff;
         }
 
-
         #search-results {
-            width: 100%; /* Make results list fill container width */
+            width: 100%;
             list-style: none;
             padding: 0;
             margin: 0;
@@ -260,11 +251,11 @@
         }
 
         #search-results li {
-            padding: 15px 20px; /* More padding */
+            padding: 15px 20px;
             cursor: pointer;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* More subtle separator */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             transition: background-color 0.2s ease-in-out;
-            font-size: 1.05em; /* Slightly larger font */
+            font-size: 1.05em;
         }
 
         #search-results li:last-child {
@@ -272,90 +263,168 @@
         }
 
         #search-results li:hover,
-        #search-results li.selected { /* Add selected class for keyboard navigation */
-            background-color: rgba(150, 50, 200, 0.08); /* Subtle purple background on hover/selected */
+        #search-results li.selected {
+            background-color: rgba(150, 50, 200, 0.08);
         }
-         /* --- End Revamped Search Bar Styling --- */
 
-
-        /* Wormhole Animation Overlay */
-        /* Removed this div as it was obscuring the canvas */
-
-        /* Traveling Text and Progress Bar Styles */
+        /* Wormhole UI Styles */
         #wormhole-ui {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            padding: 20px; /* Increased padding */
+            padding: 20px;
             box-sizing: border-box;
             text-align: center;
             color: #fff;
-            font-size: 1.2em; /* Increased font size */
-            z-index: 50; /* Above canvas, below search/menu */
-            display: none; /* Hidden by default */ /* FIX: Set initial display to none */
-            flex-direction: column; /* Stack text and progress bar */
-            align-items: center; /* Center items horizontally */
-            justify-content: center; /* Center items vertically */
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0)); /* Subtle gradient fade */
-            pointer-events: none; /* Allow clicks to pass through by default */
+            font-size: 1.2em;
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
+            pointer-events: none;
         }
          #wormhole-ui.active {
-             pointer-events: auto; /* Enable clicks when active */
+             pointer-events: auto;
          }
 
-
         #travel-text {
-            margin-bottom: 15px; /* Space between text and progress bar */
+            margin-bottom: 15px;
             font-weight: 600;
-            text-shadow: 0 0 8px rgba(167, 139, 250, 0.4); /* Subtle purple glow */
+            text-shadow: 0 0 8px rgba(167, 139, 250, 0.4);
         }
 
         #progress-bar-container {
-            width: 80%; /* Adjust width as needed */
-            max-width: 500px; /* Max width for larger screens */
-            height: 12px; /* Increased height */
-            background-color: rgba(255, 255, 255, 0.2); /* Transparent white track */
-            border-radius: 6px; /* Rounded corners */
-            overflow: hidden; /* Hide overflowing progress */
-            margin: 0 auto; /* Center the progress bar */
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3); /* Inner shadow */
+            width: 80%;
+            max-width: 500px;
+            height: 12px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 0 auto;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
         #progress-bar {
             height: 100%;
-            width: 0%; /* Starts at 0 */
-            background-color: #a78bfa; /* Tailwind violet-400 */
-            border-radius: 6px; /* Match container corners */
-            transition: width linear; /* Smooth linear transition */
+            width: 0%;
+            background-color: #a78bfa;
+            border-radius: 6px;
+            transition: width linear;
         }
 
         #skip-button {
             position: absolute;
-            bottom: 20px; /* Position from the bottom */
-            right: 20px; /* Position from the right */
-            padding: 10px 20px; /* Padding */
-            background-color: rgba(239, 68, 68, 0.7); /* Transparent red-500 */
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: rgba(239, 68, 68, 0.7);
             color: white;
-            border: 1px solid rgba(239, 68, 68, 0.5); /* Subtle red border */
-            border-radius: 8px; /* Rounded corners */
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 8px;
             cursor: pointer;
             font-size: 1em;
-            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); /* Subtle red shadow */
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
             transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            z-index: 60; /* Above wormhole UI */
-            display: none; /* Hidden by default */
+            z-index: 60;
+            display: none;
         }
         #skip-button:hover {
-             background-color: rgba(220, 38, 38, 0.8); /* Darker red on hover */
-             box-shadow: 0 6px 12px rgba(220, 38, 38, 0.4); /* More prominent shadow on hover */
+             background-color: rgba(220, 38, 38, 0.8);
+             box-shadow: 0 6px 12px rgba(220, 38, 38, 0.4);
         }
         #skip-button:active {
-             background-color: rgba(185, 28, 28, 0.9); /* Even darker red on active */
+             background-color: rgba(185, 28, 28, 0.9);
              box-shadow: 0 2px 5px rgba(185, 28, 28, 0.5);
         }
 
+         #abort-button {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: rgba(253, 186, 116, 0.7);
+            color: black;
+            border: 1px solid rgba(253, 186, 116, 0.5);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            box-shadow: 0 4px 10px rgba(253, 186, 116, 0.3);
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            z-index: 60;
+            display: none;
+        }
+         #abort-button:hover {
+             background-color: rgba(251, 146, 60, 0.8);
+             box-shadow: 0 6px 12px rgba(251, 146, 60, 0.4);
+        }
+         #abort-button:active {
+             background-color: rgba(245, 101, 37, 0.9);
+             box-shadow: 0 2px 5px rgba(245, 101, 37, 0.5);
+        }
 
+        /* Tutorial Popup Styles */
+        #tutorial-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #tutorial-content {
+            background-color: rgba(10, 0, 20, 0.9);
+            color: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(50, 0, 80, 0.6);
+            position: relative;
+            border: 1px solid rgba(150, 50, 200, 0.5);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        #tutorial-content h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: #a78bfa;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+
+        #tutorial-content p {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        #tutorial-content strong {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        #close-tutorial {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 2em;
+            cursor: pointer;
+            transition: color 0.2s ease-in-out;
+        }
+
+        #close-tutorial:hover {
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -386,6 +455,22 @@
     </div>
 
     <button id="skip-button">Skip Warp</button>
+    <button id="abort-button">Abort Warp</button>
+
+    <div id="tutorial-popup">
+        <div id="tutorial-content">
+            <button id="close-tutorial">&times;</button>
+            <h2>Welcome to My Project System!</h2>
+            <p>This interactive star system represents my various coding projects. Each planet is a different project you can explore.</p>
+            <p><strong>Navigation:</strong></p>
+            <ul>
+                <li>-Drag your mouse to rotate, shift drag to move, and scroll to zoom around the star system.</li>
+                <li>-Click on a planet to focus on it and learn more about the project.</li>
+                <li>-Use the search bar at the top to find projects by name or description.</li>
+            </ul>
+            <p>-Clicking "Travel" from the project menu will open the project's link in a new tab, simulating a warp jump!</p>
+        </div>
+    </div>
 
 
     <script>
@@ -395,6 +480,8 @@
             { id: 'randomcolor', name: 'Random Color Generator', link: 'https://mythses.github.io/randomcolor', version: '1.0', description: 'Generates random colors with their names from colornames.org' },
             { id: 'polystats', name: 'PolyStats', link: 'https://mythses.github.io/polystats', version: 'Alpha 3', description: 'Displays stats and data for the game Polytrack' },
             { id: 'graphisizer', name: 'Graphisizer', link: 'https://mythses.github.io/graphisizer', version: '2.0', description: 'A tool for visualizing WCA results' },
+            { id: 'cubicchaos', name: 'Cubic Chaos', link: 'https://mythses.itch.io/cubic-chaos', version: '1.0', description: 'My first Unity Game from a while back. 2D platformer+obstacle dodger' },
+            { id: 'scratch', name: 'Scratch Account', link: 'https://scratch.mit.edu/users/-myths-', version: 'N/A', description: 'My old scratch account(it is basically abandoned)' },
         ];
 
         // --- Three.js Main Star System Setup ---
@@ -411,12 +498,12 @@
         controls.screenSpacePanning = false;
         controls.maxPolarAngle = Math.PI;
 
-        // Starry Background
+        // Starry Background - Updated to use ShaderMaterial for glow and fixed depthTest
         const starGeometry = new THREE.BufferGeometry();
-        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
-        const starVertices = [];
         const starCount = 5000;
         const starFieldRadius = 1000; // Outer boundary for stars
+        const starVertices = [];
+        const starSizes = new Float32Array(starCount); // Add size attribute for stars
 
         // Calculate minimum distance for stars based on planet orbits
         const maxPlanetDistance = projects.reduce((max, project, index) => {
@@ -434,21 +521,46 @@
             // Only add stars outside the minimum distance and within the outer boundary
             if (distance >= minStarDistance && distance <= starFieldRadius) {
                 starVertices.push(x, y, z);
+                starSizes[i] = (Math.random() * 2.0) + 0.5; // Random size between 0.5 and 2.5
             } else {
                 // If the star is too close or too far, try generating another one
                 i--;
             }
         }
         starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        starGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1)); // Add size attribute
+
+        // ShaderMaterial for glowing stars - Removed depthTest: false
+        const starMaterial = new THREE.ShaderMaterial({
+             uniforms: {
+                 // No uniforms needed for this simple glow effect
+             },
+             vertexShader: `
+                 attribute float size;
+                 void main() {
+                     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+                     // Scale point size based on distance
+                     gl_PointSize = size * ( 300.0 / -mvPosition.z ); // Adjust scaling factor as needed
+                     gl_Position = projectionMatrix * mvPosition;
+                 }
+             `,
+             fragmentShader: `
+                 void main() {
+                     // Simple circular glow effect
+                     float strength = distance(gl_PointCoord, vec2(0.5, 0.5));
+                     strength = 1.0 - strength; // Invert so center is strongest
+                     strength = pow(strength, 4.0); // Increase power for a softer falloff and more central brightness
+
+                     gl_FragColor = vec4( vec3(1.0), strength ); // White color with alpha based on strength
+                 }
+             `,
+             blending: THREE.AdditiveBlending, // For brighter stars and glow effect
+             // depthTest: false, // REMOVED THIS LINE
+             transparent: true // Enable transparency
+         });
+
         const stars = new THREE.Points(starGeometry, starMaterial);
         scene.add(stars);
-
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040);
-        scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(1, 1, 1).normalize();
-        scene.add(directionalLight);
 
         // Star (Sun)
         const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
@@ -456,29 +568,119 @@
         const sun = new THREE.Mesh(sunGeometry, sunMaterial);
         scene.add(sun);
 
+        // Sun Glow Effect (using a Sprite with a radial gradient texture)
+        const canvasSize = 128;
+        const sunGlowCanvas = document.createElement('canvas');
+        sunGlowCanvas.width = canvasSize;
+        sunGlowCanvas.height = canvasSize;
+        const glowContext = sunGlowCanvas.getContext('2d');
+
+        const gradient = glowContext.createRadialGradient(
+            canvasSize / 2, canvasSize / 2, 0,
+            canvasSize / 2, canvasSize / 2, canvasSize / 2
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 0, 0.8)'); // Inner bright yellow
+        gradient.addColorStop(0.5, 'rgba(255, 165, 0, 0.4)'); // Orange
+        gradient.addColorStop(1, 'rgba(255, 0, 0, 0)'); // Transparent red
+
+        glowContext.fillStyle = gradient;
+        glowContext.fillRect(0, 0, canvasSize, canvasSize);
+
+        const sunGlowTexture = new THREE.CanvasTexture(sunGlowCanvas);
+        const sunGlowMaterial = new THREE.SpriteMaterial({
+            map: sunGlowTexture,
+            blending: THREE.AdditiveBlending,
+            // Removed depthTest: false
+            transparent: true
+        });
+        const sunGlowSprite = new THREE.Sprite(sunGlowMaterial);
+        const sunGlowSize = 15; // Adjust size as needed
+        sunGlowSprite.scale.set(sunGlowSize, sunGlowSize, 1);
+        sunGlowSprite.position.set(0, 0, 0); // Position at the sun's center
+        sunGlowSprite.renderOrder = -1; // Render behind planets
+        scene.add(sunGlowSprite);
+
+
+        // Add a PointLight at the sun's position to illuminate other objects
+        const sunLight = new THREE.PointLight(0xffffff, 1, 500);
+        sunLight.position.set(0, 0, 0);
+        scene.add(sunLight);
+
+        // Function to generate a random color within a specified HSL range
+        function getRandomColorFromRange(hueRange, saturationRange, lightnessRange) {
+            const h = hueRange[0] + Math.random() * (hueRange[1] - hueRange[0]);
+            const s = saturationRange[0] + Math.random() * (saturationRange[1] - saturationRange[0]);
+            const l = lightnessRange[0] + Math.random() * (lightnessRange[1] - lightnessRange[0]);
+            const color = new THREE.Color();
+            color.setHSL(h, s, l);
+            return color;
+        }
+
+        // Define HSL ranges for different planet types (Hue, Saturation, Lightness)
+        const colorRanges = {
+            reds: [[0, 0.05], [0.5, 1.0], [0.3, 0.7]], // Red/Orange Hues (e.g., Mars)
+            browns: [[0.05, 0.15], [0.4, 0.8], [0.2, 0.6]], // Orange/Brown Hues (e.g., rocky planets)
+            blues: [[0.55, 0.7], [0.6, 1.0], [0.4, 0.8]], // Blue Hues (e.g., Earth, gas giants)
+            greys: [[0, 1], [0, 0.1], [0.3, 0.7]] // Any Hue, Low Saturation (e.g., moon-like, rocky)
+        };
+
+
         // Planets (Projects)
         const planetMeshes = [];
         const planetDataMap = new Map();
         const planetOrbits = [];
         const originalPlanetColors = new Map();
+        // Removed outlineColor
+
 
         projects.forEach((project, index) => {
-            const distance = 20 + index * 10;
+            const distance = 20 + index * 10 + Math.random() * 5; // Add some randomness to distance
             const angle = Math.random() * Math.PI * 2;
-            const speed = 0.001 + index * 0.0003;
+            const speed = 0.001 + index * 0.0003 + Math.random() * 0.0002; // Add some randomness to speed
 
-            const planetGeometry = new THREE.SphereGeometry(1 + Math.random() * 1.5, 32, 32);
-            const initialColor = Math.random() * 0xffffff;
-            const planetMaterial = new THREE.MeshPhongMaterial({ color: initialColor });
+            const planetRadius = 1 + Math.random() * 1.5; // Vary planet size
+            const planetGeometry = new THREE.SphereGeometry(planetRadius, 32, 32);
+
+            // Select a random color range and generate a color
+            const colorRangeKeys = Object.keys(colorRanges);
+            const randomColorRangeKey = colorRangeKeys[Math.floor(Math.random() * colorRangeKeys.length)];
+            const selectedColorRange = colorRanges[randomColorRangeKey];
+            const initialColor = getRandomColorFromRange(selectedColorRange[0], selectedColorRange[1], selectedColorRange[2]);
+
+
+            // Adjust material properties based on color range
+            let planetMaterial;
+            if (randomColorRangeKey === 'blues') {
+                 // Suggests water/gas giant - less shiny, more diffuse
+                 planetMaterial = new THREE.MeshPhongMaterial({
+                    color: initialColor,
+                    emissive: initialColor,
+                    emissiveIntensity: 0.1,
+                    specular: new THREE.Color(0x111111), // Low specular reflection
+                    shininess: 10 // Low shininess
+                 });
+            } else {
+                 // Suggests rock/dirt - more variation in shininess/specular, rougher
+                 planetMaterial = new THREE.MeshPhongMaterial({
+                    color: initialColor,
+                    emissive: initialColor,
+                    emissiveIntensity: 0.1,
+                    specular: new THREE.Color(0x111111 + Math.random() * 0x222222), // Vary specular reflection, reduced max
+                    shininess: 5 + Math.random() * 15 // Reduced shininess range for rougher look
+                 });
+            }
+
+
             const planet = new THREE.Mesh(planetGeometry, planetMaterial);
 
             planet.position.set(distance * Math.cos(angle), 0, distance * Math.sin(angle));
             planet.userData = { projectId: project.id };
+            planet.renderOrder = 1; // Ensure planets render in front of the sun glow
             scene.add(planet);
             planetMeshes.push(planet);
             planetDataMap.set(planet, project);
             planetOrbits.push({ mesh: planet, distance: distance, angle: angle, speed: speed });
-            originalPlanetColors.set(planet, initialColor);
+            originalPlanetColors.set(planet, initialColor.getHex());
 
             // Orbit Path Line
             const orbitGeometry = new THREE.RingGeometry(distance - 0.1, distance + 0.1, 64);
@@ -486,13 +688,56 @@
             const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
             orbit.rotation.x = Math.PI / 2;
             scene.add(orbit);
+
+            // Removed Outline Mesh creation and related userData
+
+            // Nametag (Sprite)
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const text = project.name;
+            const fontSize = 24; // Increased font size
+            context.font = `${fontSize}px 'Space Mono', monospace`; // Use Space Mono
+            const textWidth = context.measureText(text).width;
+            // Adjust canvas size based on text width and height
+            const canvasWidth = textWidth + 16; // Add padding
+            const canvasHeight = fontSize + 8; // Add padding
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            // Redraw text with padding and center alignment
+            context.font = `${fontSize}px 'Space Mono', monospace`;
+            context.fillStyle = 'white';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(text, canvasWidth / 2, canvasHeight / 2);
+
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter; // Improve text rendering quality
+            texture.magFilter = THREE.LinearFilter;
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const nametagSprite = new THREE.Sprite(spriteMaterial);
+
+            // Scale the sprite based on the canvas size
+            const spriteScaleFactor = 0.045; // Increased scale factor
+            nametagSprite.scale.set(canvasWidth * spriteScaleFactor, canvasHeight * spriteScaleFactor, 1);
+
+            // Position the nametag slightly above the planet
+            const nametagOffset = planetRadius + nametagSprite.scale.y * 0.5 + 0.5; // Adjust offset based on planet radius and sprite size
+            nametagSprite.position.set(0, nametagOffset, 0);
+
+            planet.add(nametagSprite); // Add nametag as a child of the planet
+            planet.userData.nametag = nametagSprite; // Store reference
         });
 
-        // Camera initial position
-        camera.position.z = 50;
+        // Camera initial position - Side and above view
+        camera.position.set(50, 30, 50); // Adjusted position
+        controls.target.set(0, 0, 0); // Look at the center (sun)
+        controls.update(); // Update controls after changing position/target
+
 
         // Store the initial offset from camera to planet when focused
-        let cameraOffset = new THREE.Vector3(0, 5, 15); // Default offset
+        let cameraOffset = new THREE.Vector3(0, 5, 15);
 
         // Raycaster for interaction
         const raycaster = new THREE.Raycaster();
@@ -501,8 +746,8 @@
         let mouseX = 0;
         let mouseY = 0;
 
-
         let hoveredPlanet = null;
+        let hoveredSearchResultPlanet = null;
         let focusedPlanet = null;
         let isAnimatingFocus = false;
         let selectedSearchResultIndex = -1;
@@ -525,11 +770,75 @@
         const travelTextElement = document.getElementById('travel-text');
         const progressBarElement = document.getElementById('progress-bar');
         const skipButton = document.getElementById('skip-button');
+        const abortButton = document.getElementById('abort-button');
+        // Tutorial Popup Elements
+        const tutorialPopup = document.getElementById('tutorial-popup');
+        const closeTutorialButton = document.getElementById('close-tutorial');
+
+
+        // Global variable to store the timeout ID for the warp completion redirect
+        let warpTimeoutId = null;
+
+        // Function to handle mouse movement and check for planet hover
+        function onMouseMoveAndCheckHover(event) {
+            // Update raw mouse coordinates
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+
+            // Update normalized device coordinates for raycasting
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Only perform raycasting for hover when not wormhole animating, search is not open, menu is not open, and not animating focus
+            if (!isWormholeAnimating && !searchContainer.classList.contains('expanded') && !sideMenu.classList.contains('open') && !isAnimatingFocus && tutorialPopup.style.display !== 'flex') {
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(planetMeshes);
+
+                let currentSceneHoveredPlanet = null;
+                if (intersects.length > 0) {
+                    currentSceneHoveredPlanet = intersects[0].object;
+                }
+
+                // Handle tooltip visibility based on scene hover
+                if (hoveredPlanet !== currentSceneHoveredPlanet) {
+                    hoveredPlanet = currentSceneHoveredPlanet;
+                    if (hoveredPlanet) {
+                        showTooltip(planetDataMap.get(hoveredPlanet), mouseX + 10, mouseY + 10);
+                    } else {
+                         // Only hide tooltip if no search result is also hovered
+                         if (!hoveredSearchResultPlanet) {
+                             hideTooltip();
+                         }
+                    }
+                }
+
+                 // If a search result is hovered, its tooltip takes precedence
+                 if (hoveredSearchResultPlanet) {
+                     // Tooltip position handled in onSearchResultMouseOver
+                 } else if (hoveredPlanet) {
+                      showTooltip(planetDataMap.get(hoveredPlanet), mouseX + 10, mouseY + 10);
+                 } else {
+                      hideTooltip();
+                 }
+
+
+            } else if (isWormholeAnimating) {
+                 // Pass mouse coordinates to the wormhole animation if it's active
+                 wormholeMouseX = (event.clientX - wormholeWindowHalfX);
+                 wormholeMouseY = (event.clientY - wormholeWindowHalfY);
+            } else {
+                 // If UI is open or animating, hide scene hover tooltip
+                 if (hoveredPlanet) {
+                     hoveredPlanet = null;
+                     hideTooltip();
+                 }
+            }
+        }
 
 
         // Event Listeners
         window.addEventListener('resize', onWindowResize, false);
-        renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+        renderer.domElement.addEventListener('mousemove', onMouseMoveAndCheckHover, false);
         renderer.domElement.addEventListener('click', onClick, false);
         closeMenuButton.addEventListener('click', closeSideMenu, false);
         travelButton.addEventListener('click', onTravelClick, false);
@@ -537,41 +846,44 @@
         clearSearchButton.addEventListener('click', clearSearch, false);
         searchResultsList.addEventListener('click', onSearchResultClick, false);
         searchInput.addEventListener('keydown', onSearchInputKeydown, false);
-        skipButton.addEventListener('click', onSkipClick, false); // Add listener for skip button
+        skipButton.addEventListener('click', onSkipClick, false);
+        abortButton.addEventListener('click', onAbortClick, false);
+        closeTutorialButton.addEventListener('click', closeTutorial, false);
 
 
         // Add mouseover/mouseout listeners for search results list items using delegation
         searchResultsList.addEventListener('mouseover', onSearchResultMouseOver, false);
         searchResultsList.addEventListener('mouseout', onSearchResultMouseOut, false);
 
-
         // Search bar focus/blur listeners
         searchInput.addEventListener('focus', expandSearch, false);
         searchInput.addEventListener('blur', collapseSearch, false);
 
-        // Click listener to close search/menu when clicking outside
+        // Click listener to close search/menu/tutorial when clicking outside
         document.body.addEventListener('click', (event) => {
             const isClickInsideSearch = searchContainer.contains(event.target);
             const isClickInsideSideMenu = sideMenu.contains(event.target);
-
-             // Check if the click target is the canvas itself
+            const isClickInsideTutorial = tutorialPopup.contains(event.target);
             const isClickOnCanvas = event.target === renderer.domElement;
 
-
-            // Close search if expanded and clicked outside (and not on the canvas during wormhole)
-            if (searchContainer.classList.contains('expanded') && !isClickInsideSearch && (!isWormholeAnimating || !isClickOnCanvas)) {
+            // Collapse search if open and click is outside search, menu, and canvas (during wormhole)
+            if (searchContainer.classList.contains('expanded') && !isClickInsideSearch && !isClickInsideSideMenu && (!isWormholeAnimating || !isClickOnCanvas)) {
                 collapseSearch();
             }
-            // Close side menu if open and clicked outside (and not on the canvas during wormhole)
-            if (sideMenu.classList.contains('open') && !isClickInsideSideMenu && (!isWormholeAnimating || !isClickOnCanvas)) {
+            // Close side menu if open and click is outside menu, search, and canvas (during wormhole)
+            if (sideMenu.classList.contains('open') && !isClickInsideSideMenu && !isClickInsideSearch && (!isWormholeAnimating || !isClickOnCanvas)) {
                  closeSideMenu();
             }
-             // If wormhole is animating and click is not inside search/menu, handle canvas click logic if any is needed
-             if (isWormholeAnimating && !isClickInsideSearch && !isClickInsideSideMenu) {
-                 // Add any specific click logic for the wormhole animation here if needed
-                 console.log("Click on canvas during wormhole animation.");
+             // Close tutorial if open and click is outside tutorial
+             if (tutorialPopup.style.display === 'flex' && !isClickInsideTutorial) {
+                 closeTutorial();
+             }
+             // Log clicks on UI during wormhole animation (for debugging)
+             if (isWormholeAnimating && (isClickInsideSearch || isClickInsideSideMenu || isClickInsideTutorial)) {
+                 console.log("Click inside UI during wormhole animation.");
              }
         });
+
 
         // Prevent blur from collapsing immediately if clicking a search result
         searchResultsList.addEventListener('mousedown', (event) => {
@@ -579,13 +891,13 @@
         });
 
 
-        // --- Three.js Main Animation Loop ---
-        let currentAnimationId = null; // To store the current animation frame ID
-        let isWormholeAnimating = false; // Flag to control which scene is rendered
-        let wormholeStartTime = 0; // To track the start time of the wormhole animation
-        const wormholeDuration = 4000; // Shorter duration (4 seconds)
 
-        // Traveling text messages
+        // --- Three.js Main Animation Loop ---
+        let currentAnimationId = null;
+        let isWormholeAnimating = false;
+        let wormholeStartTime = 0;
+        const wormholeDuration = 4000;
+
         const travelMessages = [
             "Initiating Warp Sequence...",
             "Calculating Jump Coordinates...",
@@ -594,68 +906,53 @@
             "Exiting Warp..."
         ];
         let currentMessageIndex = 0;
-        // Adjust message interval for shorter duration
         let messageInterval = wormholeDuration / travelMessages.length;
-
 
         function animate(currentTime) {
             currentAnimationId = requestAnimationFrame(animate);
 
             if (isWormholeAnimating) {
-                // console.log("Rendering wormhole scene..."); // Keep this commented unless needed for debugging
-                // --- Wormhole Animation Logic ---
                  if (!wormholeAnimationScene || !wormholeAnimationCamera || !wormholeParticleGeometry || !wormholeParticleMaterial) {
                      console.error("Wormhole animation resources not fully initialized in animate (wormhole). Attempting to stop.");
-                     stopWormholeAnimation(); // Attempt to clean up if resources are missing
+                     stopWormholeAnimation();
                      return;
                  }
 
-                // Calculate elapsed time for UI updates
                 const elapsedTime = currentTime - wormholeStartTime;
                 const progress = Math.min(elapsedTime / wormholeDuration, 1);
 
-                // Update Progress Bar
                 progressBarElement.style.width = (progress * 100) + '%';
 
-                // Update Traveling Text
                 const newMessageIndex = Math.min(Math.floor(elapsedTime / messageInterval), travelMessages.length - 1);
                 if (newMessageIndex !== currentMessageIndex) {
                     currentMessageIndex = newMessageIndex;
                     travelTextElement.textContent = travelMessages[currentMessageIndex];
                 }
 
-
-                // Move the wormhole camera based on mouse position (subtle effect)
                 wormholeAnimationCamera.position.x += (wormholeMouseX * 0.001 - wormholeAnimationCamera.position.x) * .05;
                 wormholeAnimationCamera.position.y += (-wormholeMouseY * 0.001 - wormholeAnimationCamera.position.y) * .05;
-                // Camera Z position is fixed for the warp effect
 
-
-                // Get particle positions and velocities
                 const positions = wormholeParticleGeometry.attributes.position.array;
                 const velocities = wormholeParticleGeometry.attributes.velocity.array;
-                const colors = wormholeParticleGeometry.attributes.color.array; // Get color array
-                const sizes = wormholeParticleGeometry.attributes.size.array; // Get size array
+                const colors = wormholeParticleGeometry.attributes.color.array;
+                const sizes = wormholeParticleGeometry.attributes.size.array;
 
-                // Update particle positions
                 for (let i = 0; i < positions.length; i += 3) {
-                    // Move particle along its velocity vector (towards NEGATIVE Z for warp IN)
                     positions[i] += velocities[i];
                     positions[i + 1] += velocities[i + 1];
                     positions[i + 2] += velocities[i + 2];
 
-                    // If a particle goes beyond the camera (or a point near it), reset its position
-                    // to the end of the tunnel (positive Z) within the donut shape and assign a new color and size
-                    // Check if particle Z is less than the camera's Z (moving past the camera)
                     if (positions[i + 2] < wormholeAnimationCamera.position.z) {
                         const angle = Math.random() * Math.PI * 2;
-                        // Distribute particles between inner and outer radius
                         const radius = innerRadius + Math.random() * (outerRadius - innerRadius);
-                        positions[i] = Math.cos(angle) * radius;
-                        positions[i + 1] = Math.sin(angle) * radius;
-                        positions[i + 2] = endZ; // Reset to the endZ (positive Z)
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        const z = endZ; // Reset to the endZ (positive Z)
 
-                        // Assign a new random color from the predefined list when resetting
+                        positions[i] = x;
+                        positions[i + 1] = y;
+                        positions[i + 2] = z;
+
                         const color = new THREE.Color();
                         const randomHSL = getRandomColorHSL();
                         color.setHSL(randomHSL.h, randomHSL.s, randomHSL.l);
@@ -664,20 +961,14 @@
                         colors[i * 3 + 1] = color.g;
                         colors[i * 3 + 2] = color.b;
 
-                        // Assign a new random size when resetting
                         sizes[i / 3] = (Math.random() * 8.0) + 1.0; // Increased max size to 9.0
                     }
-
-                    // Optional: Add some acceleration or change in velocity
-                    // velocities[i + 2] -= 0.005; // Accelerate towards negative Z
                 }
 
-                // Indicate that the position, color, and size attributes need to be updated
                 wormholeParticleGeometry.attributes.position.needsUpdate = true;
-                wormholeParticleGeometry.attributes.color.needsUpdate = true; // Indicate color update
-                wormholeParticleGeometry.attributes.size.needsUpdate = true; // Indicate size update
+                wormholeParticleGeometry.attributes.color.needsUpdate = true;
+                wormholeParticleGeometry.attributes.size.needsUpdate = true;
 
-                // Render the wormhole scene
                 renderer.render(wormholeAnimationScene, wormholeAnimationCamera);
 
             } else {
@@ -687,66 +978,23 @@
                      return;
                  }
 
-                // Animate Planets Orbiting
                 planetOrbits.forEach(orbitData => {
                     orbitData.angle += orbitData.speed;
                     orbitData.mesh.position.x = orbitData.distance * Math.cos(orbitData.angle);
                     orbitData.mesh.position.z = orbitData.distance * Math.sin(orbitData.angle);
                 });
 
-                // Check if the side menu is open and a planet is focused
                 if (sideMenu.classList.contains('open') && focusedPlanet) {
-                    // Get the current world position of the focused planet
                     const targetPosition = new THREE.Vector3();
                     focusedPlanet.getWorldPosition(targetPosition);
-
-                    // Update the OrbitControls target to follow the planet
                     controls.target.copy(targetPosition);
-
-                    // Calculate the desired camera position relative to the planet
                     const desiredCameraPosition = targetPosition.clone().add(cameraOffset);
-
-                    // Smoothly interpolate the camera's current position towards the desired position
-                    // Need a separate progress variable or remove interpolation if not desired here
-                    // camera.position.lerpVectors(startPosition, finalCameraPosition, progress);
-                    // controls.target.lerpVectors(startLookAt, targetPosition, progress);
-                    controls.update(); // Update controls to apply the new target
-
+                    camera.position.lerp(desiredCameraPosition, 0.1); // Smooth camera movement when menu is open
+                    controls.update();
                 } else {
-                     // Only update controls normally if not following a planet
                      controls.update();
                 }
 
-
-                // Raycasting for planet hover (only when search is NOT open and side menu is NOT open and NOT animating focus)
-                if (!searchContainer.classList.contains('expanded') && !sideMenu.classList.contains('open') && !isAnimatingFocus) {
-                    raycaster.setFromCamera(mouse, camera);
-                    const intersects = raycaster.intersectObjects(planetMeshes);
-                    if (intersects.length > 0) {
-                        const intersected = intersects[0].object;
-                        if (hoveredPlanet !== intersected) {
-                            hoveredPlanet = intersected;
-                             // Show tooltip for planet hover (canvas interaction)
-                            // Use stored mouse coordinates for positioning
-                            showTooltip(planetDataMap.get(hoveredPlanet), mouseX + 10, mouseY + 10);
-                        }
-                    } else {
-                        if (hoveredPlanet) {
-                            hideTooltip(); // Hide tooltip if mouse leaves planet
-                            hoveredPlanet = null;
-                        }
-                    }
-                } else if (sideMenu.classList.contains('open') || isAnimatingFocus) {
-                     // Hide tooltip if side menu is open or animating focus
-                     hideTooltip();
-                     hoveredPlanet = null; // Ensure hoveredPlanet is cleared
-                }
-                // Search result tooltip is handled by separate mouseover/mouseout events on the list itself.
-                // The hideTooltip() call in the else if block will also hide the search result tooltip if the side menu is opened
-                // while hovering a search result, which is the desired behavior.
-
-
-                // Render the main scene
                 renderer.render(scene, camera);
             }
         }
@@ -756,33 +1004,27 @@
             windowHalfX = window.innerWidth / 2;
             windowHalfY = window.innerHeight / 2;
 
-            // Update main camera and renderer
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
 
-            // Update wormhole camera if it exists
             if (wormholeAnimationCamera) {
                  wormholeAnimationCamera.aspect = window.innerWidth / window.innerHeight;
                  wormholeAnimationCamera.updateProjectionMatrix();
-                 // Update wormhole window half sizes as well
                  wormholeWindowHalfX = window.innerWidth / 2;
                  wormholeWindowHalfY = window.innerHeight / 2;
             }
         }
 
         function onMouseMove(event) {
-            // Update raw mouse coordinates
             mouseX = event.clientX;
             mouseY = event.clientY;
 
-            // Update normalized device coordinates for raycasting (only needed for main scene interaction)
             if (!isWormholeAnimating) {
                 mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
             }
 
-            // Pass mouse coordinates to the wormhole animation if it's active
             if (isWormholeAnimating) {
                  wormholeMouseX = (event.clientX - wormholeWindowHalfX);
                  wormholeMouseY = (event.clientY - wormholeWindowHalfY);
@@ -790,27 +1032,22 @@
         }
 
         function onClick(event) {
-             // Check if the click was inside the search container or side menu
              const isClickInsideSearch = searchContainer.contains(event.target);
              const isClickInsideSideMenu = sideMenu.contains(event.target);
-             // Check if the click target is the canvas itself
-            const isClickOnCanvas = event.target === renderer.domElement;
+             const isClickInsideTutorial = tutorialPopup.contains(event.target);
+             const isClickOnCanvas = event.target === renderer.domElement;
 
-
-             if (isClickInsideSearch || isClickInsideSideMenu || (isWormholeAnimating && !isClickOnCanvas)) {
-                 return; // Don't do anything if clicking inside search, menu, or on non-canvas elements during wormhole animation
+             // Ignore clicks inside UI elements or during wormhole animation (unless on canvas)
+             if (isClickInsideSearch || isClickInsideSideMenu || isClickInsideTutorial || (isWormholeAnimating && !isClickOnCanvas)) {
+                 return;
              }
 
-             // If wormhole is animating and click is on canvas, handle canvas click logic if any is needed
              if (isWormholeAnimating && isClickOnCanvas) {
-                 // Add any specific click logic for the wormhole animation here if needed
                  console.log("Click on canvas during wormhole animation.");
-                 return; // Prevent main scene click logic
+                 return;
              }
 
-
-            // Main scene click logic (only if not wormhole animating and not inside search/menu)
-            if (!isWormholeAnimating && !searchContainer.classList.contains('expanded') && !isAnimatingFocus) {
+            if (!isWormholeAnimating && !searchContainer.classList.contains('expanded') && !sideMenu.classList.contains('open') && !isAnimatingFocus && tutorialPopup.style.display !== 'flex') {
                  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
                  raycaster.setFromCamera(mouse, camera);
@@ -820,7 +1057,6 @@
                      const clickedPlanet = intersects[0].object;
                      focusOnPlanet(clickedPlanet);
                  } else if (focusedPlanet) {
-                     // Close side menu if clicking outside of it and not on a planet
                      closeSideMenu();
                  }
             }
@@ -830,16 +1066,13 @@
             if (focusedPlanet) {
                 const projectData = planetDataMap.get(focusedPlanet);
                 if (projectData && projectData.link) {
-                    // Start the wormhole animation and UI updates
-                    startWormholeAnimation(projectData.link); // Pass the link to the animation function
+                    startWormholeAnimation(projectData.link);
                 }
             }
         }
 
-        // New function to handle skipping
         function onSkipClick() {
              console.log("Skip button clicked.");
-             // Get the current focused planet's link
              let linkToOpen = null;
              if (focusedPlanet) {
                  const projectData = planetDataMap.get(focusedPlanet);
@@ -848,26 +1081,49 @@
                  }
              }
 
-             // Stop the animation immediately
+             if (warpTimeoutId !== null) {
+                 clearTimeout(warpTimeoutId);
+                 warpTimeoutId = null;
+                 console.log("Warp redirect timeout cleared by Skip.");
+             }
+
              stopWormholeAnimation();
 
-             // Open the link if available
              if (linkToOpen) {
                  window.open(linkToOpen, '_blank');
              } else {
                  console.warn("Skip clicked, but no project link was found.");
              }
 
-              // Add a slight delay before resetting main scene UI after skip
               setTimeout(() => {
                  hideTooltip();
                  closeSideMenu();
                  focusedPlanet = null;
                  isAnimatingFocus = false;
-                 controls.enabled = true; // Re-enable controls
-              }, 100); // Very short delay for immediate feel
+                 controls.enabled = true;
+                 resetPlanetColors();
+              }, 100);
         }
 
+        function onAbortClick() {
+             console.log("Abort button clicked.");
+             if (warpTimeoutId !== null) {
+                 clearTimeout(warpTimeoutId);
+                 warpTimeoutId = null;
+                 console.log("Warp redirect timeout cleared by Abort.");
+             }
+
+             stopWormholeAnimation();
+
+              setTimeout(() => {
+                 hideTooltip();
+                 closeSideMenu();
+                 focusedPlanet = null;
+                 isAnimatingFocus = false;
+                 controls.enabled = true;
+                 resetPlanetColors();
+              }, 100);
+        }
 
         function onSearchInput(event) {
             const searchTerm = event.target.value.toLowerCase();
@@ -885,12 +1141,29 @@
                 project.description.toLowerCase().includes(searchTerm)
             );
 
+            planetMeshes.forEach(planet => {
+                 const originalColorHex = originalPlanetColors.get(planet);
+                 planet.material.color.set(originalColorHex);
+                 if (planet.material.emissive) {
+                     planet.material.emissive.set(originalColorHex);
+                 }
+            });
+
             if (filteredProjects.length > 0) {
                 filteredProjects.forEach(project => {
                     const listItem = document.createElement('li');
                     listItem.textContent = project.name;
                     listItem.dataset.projectId = project.id;
                     searchResultsList.appendChild(listItem);
+
+                    const planetMesh = planetMeshes.find(mesh => mesh.userData.projectId === project.id);
+                    if (planetMesh) {
+                         const originalColorHex = originalPlanetColors.get(planetMesh);
+                         planetMesh.material.color.set(originalColorHex);
+                         if (planetMesh.material.emissive) {
+                             planetMesh.material.emissive.set(originalColorHex);
+                         }
+                    }
                 });
             } else {
                  const noResultsItem = document.createElement('li');
@@ -899,22 +1172,18 @@
                  searchResultsList.appendChild(noResultsItem);
             }
 
-            // Update planet highlighting
-            planetMeshes.forEach(planet => {
-                const projectData = planetDataMap.get(planet);
-                if (projectData) {
-                    const match = projectData.name.toLowerCase().includes(searchTerm) ||
-                                  projectData.description.toLowerCase().includes(searchTerm);
-                    if (originalPlanetColors.has(planet)) {
-                        planet.material.color.set(originalPlanetColors.get(planet));
-                    }
-                    if (searchTerm !== '' && !match) {
-                        planet.material.color.set(0x444444); // Dim non-matching planets
-                    } else if (searchTerm !== '' && match) {
-                         planet.material.color.set(0xa78bfa); /* Highlight matching planets with violet */
-                    }
-                }
-            });
+             if (searchTerm !== '') {
+                 planetMeshes.forEach(planet => {
+                     const projectData = planetDataMap.get(planet);
+                     const isMatch = filteredProjects.some(p => p.id === projectData.id);
+                     if (!isMatch) {
+                         planet.material.color.set(0x444444);
+                          if (planet.material.emissive) {
+                             planet.material.emissive.set(0x222222);
+                         }
+                     }
+                 });
+             }
         }
 
         function onSearchInputKeydown(event) {
@@ -975,35 +1244,46 @@
                         searchResultsList.innerHTML = '';
                         selectedSearchResultIndex = -1;
                         resetPlanetColors();
+                        hoveredSearchResultPlanet = null; // Clear search result hover state
                         collapseSearch();
                     }
                 }
             }
         }
 
-        // --- Search Result Hover Handlers ---
         function onSearchResultMouseOver(event) {
             const hoveredItem = event.target.closest('li');
-            // Ensure we are hovering over a list item with a project ID
             if (hoveredItem && hoveredItem.dataset.projectId) {
                 const projectId = hoveredItem.dataset.projectId;
                 const projectData = projects.find(p => p.id === projectId);
                 if (projectData) {
-                    // Position tooltip relative to the hovered list item
                     const rect = hoveredItem.getBoundingClientRect();
-                    // Pass projectData directly to showTooltip
-                    showTooltip(projectData, rect.right + 10, rect.top); // Position to the right of the item
+                    showTooltip(projectData, rect.right + 10, rect.top);
+
+                    const planetMesh = planetMeshes.find(mesh => mesh.userData.projectId === projectId);
+                    if (planetMesh) {
+                        hoveredSearchResultPlanet = planetMesh; // Set search result hover state
+                    }
                 }
             }
         }
 
         function onSearchResultMouseOut(event) {
-             // Check if the mouse is still within the search results list or the tooltip itself
              const isLeavingList = !searchResultsList.contains(event.relatedTarget);
              const isEnteringTooltip = tooltip.contains(event.relatedTarget);
 
              if (isLeavingList && !isEnteringTooltip) {
                 hideTooltip();
+             }
+
+             const leavingItem = event.target.closest('li');
+             if (leavingItem && leavingItem.dataset.projectId) {
+                 const projectId = leavingItem.dataset.projectId;
+                 const planetMesh = planetMeshes.find(mesh => mesh.userData.projectId === projectId);
+
+                 if (planetMesh && planetMesh === hoveredSearchResultPlanet) {
+                     hoveredSearchResultPlanet = null; // Clear the state
+                 }
              }
         }
 
@@ -1016,43 +1296,37 @@
         function resetPlanetColors() {
             planetMeshes.forEach(planet => {
                 if (originalPlanetColors.has(planet)) {
-                    planet.material.color.set(originalPlanetColors.get(planet));
+                    const originalColorHex = originalPlanetColors.get(planet);
+                    planet.material.color.set(originalColorHex);
+                    if (planet.material.emissive) {
+                        planet.material.emissive.set(originalColorHex);
+                    }
                 }
             });
         }
 
         // --- UI Functions ---
-        // Modified showTooltip to accept data object and position
         function showTooltip(data, x, y) {
-             // Check if the data is a Three.js mesh (from planet hover) or a project object (from search hover)
             const projectData = data && data.isMesh ? planetDataMap.get(data) : data;
-
             if (projectData) {
                 tooltip.innerHTML = `<strong>${projectData.name}</strong><br>Version: ${projectData.version}<br>${projectData.description}`;
-                // Adjust tooltip position to stay within viewport if needed
                 let tooltipX = x;
                 let tooltipY = y;
                 const tooltipRect = tooltip.getBoundingClientRect();
 
-                // Prevent tooltip from going off the right edge
                 if (tooltipX + tooltipRect.width > window.innerWidth - 10) {
                     tooltipX = window.innerWidth - tooltipRect.width - 10;
                 }
-                 // Prevent tooltip from going off the bottom edge
                  if (tooltipY + tooltipRect.height > window.innerHeight - 10) {
                      tooltipY = window.innerHeight - tooltipRect.height - 10;
                  }
-                 // Prevent going off left edge
                  if (tooltipX < 10) tooltipX = 10;
-                 // Prevent going off top edge
                  if (tooltipY < 10) tooltipY = 10;
-
 
                 tooltip.style.left = tooltipX + 'px';
                 tooltip.style.top = tooltipY + 'px';
                 tooltip.classList.add('visible');
             } else {
-                 // If no project data is found, hide the tooltip
                  hideTooltip();
             }
         }
@@ -1069,9 +1343,8 @@
             menuProjectDescription.textContent = projectData.description;
             travelButton.textContent = `Travel to ${projectData.name}`;
             sideMenu.classList.add('open');
-            controls.enabled = false; // Disable controls when menu is open
+            controls.enabled = false;
 
-             // Calculate and store the camera offset relative to the planet when the menu opens
             if (focusedPlanet) {
                  const targetPosition = new THREE.Vector3();
                  focusedPlanet.getWorldPosition(targetPosition);
@@ -1081,20 +1354,19 @@
 
         function closeSideMenu() {
             sideMenu.classList.remove('open');
-            focusedPlanet = null; // Clear focused planet when menu closes
+            focusedPlanet = null; // Clear focused planet state
             resetPlanetColors();
-            controls.enabled = true; // Re-enable controls when menu closes
+            controls.enabled = true;
         }
 
         function expandSearch() {
             searchContainer.classList.add('expanded');
-            controls.enabled = false; // Disable controls when search is open
+            controls.enabled = false;
             onSearchInput({ target: searchInput });
         }
 
         function collapseSearch() {
             setTimeout(() => {
-                // Only collapse if the input is not focused and the menu is not open
                 if (!searchInput.contains(document.activeElement) && !sideMenu.classList.contains('open')) {
                     searchContainer.classList.remove('expanded');
                     searchInput.value = '';
@@ -1102,51 +1374,51 @@
                     clearSearchButton.classList.remove('visible');
                     selectedSearchResultIndex = -1;
                     resetPlanetColors();
-                    controls.enabled = true; // Re-enable controls
+                    hoveredSearchResultPlanet = null; // Clear search result hover state
+                    hoveredPlanet = null; // Clear scene hover state
+                    hideTooltip(); // Ensure tooltip is hidden
+                    controls.enabled = true;
                 }
-            }, 100); // Small delay to allow for focus change
+            }, 100);
         }
 
         // --- Camera Focus Animation ---
         function focusOnPlanet(planet) {
             if (focusedPlanet === planet || isAnimatingFocus) return;
             isAnimatingFocus = true;
-            focusedPlanet = planet;
-            hideTooltip();
+
+            focusedPlanet = planet; // Set focused planet state
 
             const targetPosition = new THREE.Vector3();
             planet.getWorldPosition(targetPosition);
-            // Adjust offset for a better view when focusing
             const offset = new THREE.Vector3(0, 5, 15);
             const finalCameraPosition = new THREE.Vector3().addVectors(targetPosition, offset);
 
             const startPosition = camera.position.clone();
             const startLookAt = controls.target.clone();
 
-            const duration = 1000; // Animation duration in milliseconds
+            const duration = 1000;
             const startTime = performance.now();
 
             function animateFocus(currentTime) {
                 const elapsedTime = currentTime - startTime;
                 const progress = Math.min(elapsedTime / duration, 1);
 
-                // Interpolate camera position and target
                 camera.position.lerpVectors(startPosition, finalCameraPosition, progress);
                 controls.target.lerpVectors(startLookAt, targetPosition, progress);
-                controls.update(); // Update controls to apply the new target
+                controls.update();
 
                 if (progress < 1) {
                     requestAnimationFrame(animateFocus);
                 } else {
                     isAnimatingFocus = false;
-                    // Open the side menu once the focus animation is complete
                     const projectData = planetDataMap.get(planet);
                     if (projectData) {
                         openSideMenu(projectData);
                     }
                 }
             }
-            requestAnimationFrame(animateFocus); // Start the animation loop
+            requestAnimationFrame(animateFocus);
         }
 
         // --- Wormhole Animation (New Three.js based) ---
@@ -1154,131 +1426,97 @@
         let wormholeMouseX = 0, wormholeMouseY = 0;
         let wormholeWindowHalfX = window.innerWidth / 2;
         let wormholeWindowHalfY = window.innerHeight / 2;
-        // Removed wormholeAnimationId as we are using the main currentAnimationId
-        // isWormholeAnimating flag will control rendering
 
-        // Define the desired colors (light shades of cyan, pink, magenta)
-        // Using HSL: Hue (0-1), Saturation (0-1), Lightness (0-1)
-        // High lightness (e.g., 0.8-0.9) makes them light.
-        // Hues: Cyan ~0.5, Pink ~0.9-1.0/0, Magenta ~0.8-0.9
         const colorsHSL = [
-            { h: 0.55, s: 1.0, l: 0.9 }, // Light Cyan
-            { h: 0.95, s: 1.0, l: 0.9 }, // Light Pink (closer to red/magenta end)
-            { h: 0.85, s: 1.0, l: 0.9 }  // Light Magenta
+            { h: 0.55, s: 1.0, l: 0.9 },
+            { h: 0.95, s: 1.0, l: 0.9 },
+            { h: 0.85, s: 1.0, l: 0.9 }
         ];
 
-        // Function to get a random color from the defined list
         function getRandomColorHSL() {
             const index = Math.floor(Math.random() * colorsHSL.length);
             return colorsHSL[index];
         }
 
-        // Define tunnel parameters
-        const innerRadius = 50; // Inner radius of the donut hole
-        const outerRadius = 200; // Outer radius of the donut
-        const startZ = -2000; // New start position of the tunnel (further back)
-        const endZ = 500;     // End position of the tunnel (same as before)
-        const tunnelDepth = endZ - startZ; // Total depth of the tunnel
+        const innerRadius = 50;
+        const outerRadius = 200;
+        const startZ = -2000;
+        const endZ = 500;
+        const tunnelDepth = endZ - startZ;
 
-        // Function to initialize the wormhole animation scene
         function initWormholeAnimation() {
             console.log("Initializing wormhole animation...");
-            // Increased particle count
             const particleCount = 50000;
             console.log("Particle count:", particleCount);
 
-            // Create a new scene for the wormhole
             wormholeAnimationScene = new THREE.Scene();
-            // Set background color to black (relying on body background)
-            // wormholeAnimationScene.background = new THREE.Color(0x000000); // Or just leave it null
 
-            // Set up the camera for the wormhole
-            wormholeAnimationCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000); // Increased far plane
-            // Position the camera behind the start of the tunnel and look forward
-            wormholeAnimationCamera.position.z = startZ - 100; // Position camera behind the start of particles
-            wormholeAnimationCamera.lookAt(new THREE.Vector3(0, 0, 0)); // Look towards the center of the tunnel
+            wormholeAnimationCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
+            wormholeAnimationCamera.position.z = startZ - 100;
+            wormholeAnimationCamera.lookAt(new THREE.Vector3(0, 0, 0));
             console.log("Wormhole camera initial position:", wormholeAnimationCamera.position.z);
 
-
-            // Create particle geometry
             wormholeParticleGeometry = new THREE.BufferGeometry();
             const positions = new Float32Array(particleCount * 3);
             const velocities = new Float32Array(particleCount * 3);
-            const colors = new Float32Array(particleCount * 3); // Array to store colors
-            const sizes = new Float32Array(particleCount); // Array to store sizes
+            const colors = new Float32Array(particleCount * 3);
+            const sizes = new Float32Array(particleCount);
 
             console.log("Starting particle generation loop...");
-            // Generate random positions, velocities, colors, and sizes for particles
-            for (let i = 0; i < particleCount; i++) {
-                // Position particles in a donut (ring) shape around the Z axis
+            for (let i = 0; i < particleCount * 3; i += 3) { // Corrected loop condition
                 const angle = Math.random() * Math.PI * 2;
-                // Distribute particles between inner and outer radius
                 const radius = innerRadius + Math.random() * (outerRadius - innerRadius);
                 const x = Math.cos(angle) * radius;
                 const y = Math.sin(angle) * radius;
-                // Distribute along the new tunnel depth
                 const z = startZ + Math.random() * tunnelDepth;
 
-                positions[i * 3] = x;
-                positions[i * 3 + 1] = y;
-                positions[i * 3 + 2] = z;
+                positions[i] = x;
+                positions[i + 1] = y;
+                positions[i + 2] = z;
 
-                // Initial velocity - moving towards NEGATIVE Z (towards camera)
-                velocities[i * 3] = 0;
-                velocities[i * 3 + 1] = 0;
-                velocities[i * 3 + 2] = -30; // Increased speed significantly more
+                velocities[i] = 0;
+                velocities[i + 1] = 0;
+                velocities[i + 2] = -30;
             }
              console.log("Particle generation loop finished. Generated", particleCount, "particles.");
 
-
             wormholeParticleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             wormholeParticleGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-            wormholeParticleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3)); // Add color attribute
-            wormholeParticleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1)); // Add size attribute
+            wormholeParticleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            wormholeParticleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
             console.log("Particle geometry attributes set.");
 
-
-            // Create particle material
-            // Use ShaderMaterial for more control over size and potentially glow
             wormholeParticleMaterial = new THREE.ShaderMaterial({
-                uniforms: {
-                    // uniforms can be used to pass data that is the same for all particles
-                    // (e.g., a texture, time)
-                },
+                uniforms: {},
                 vertexShader: `
-                    attribute float size; // Receive size attribute
-                    attribute vec3 color; // Receive color attribute
-                    varying vec3 vColor; // Pass color to fragment shader
+                    attribute float size;
+                    attribute vec3 color;
+                    varying vec3 vColor;
 
                     void main() {
-                        vColor = color; // Pass color through
+                        vColor = color;
                         vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-                        // Project the point and scale size based on distance
-                        // Increase the base size multiplier for larger points/trails
-                        gl_PointSize = size * ( 400.0 / -mvPosition.z ); // Note: mvPosition.z is negative in front of camera
+                        gl_PointSize = size * ( 400.0 / -mvPosition.z );
                         gl_Position = projectionMatrix * mvPosition;
                     }
                 `,
                 fragmentShader: `
-                    varying vec3 vColor; // Receive color from vertex shader
+                    varying vec3 vColor;
 
                     void main() {
-                        // Simple circular glow effect
                         float strength = distance(gl_PointCoord, vec2(0.5, 0.5));
-                        strength = 1.0 - strength; // Invert so center is strongest
-                        strength = pow(strength, 3.0); // Increase power for a softer falloff and more central brightness
+                        strength = 1.0 - strength;
+                        strength = pow(strength, 3.0);
 
-                        gl_FragColor = vec4( vColor * strength, strength ); // Apply color and alpha based on strength
+                        gl_FragColor = vec4( vColor * strength, strength );
                     }
                 `,
-                blending: THREE.AdditiveBlending, // For brighter stars and glow effect
-                depthTest: false, // Disable depth test for additive blending
-                transparent: true // Enable transparency
+                blending: THREE.AdditiveBlending,
+                depthTest: false,
+                transparent: true
             });
              console.log("Particle material created.");
 
-
-            // Create the particle system
             wormholeParticles = new THREE.Points(wormholeParticleGeometry, wormholeParticleMaterial);
             wormholeAnimationScene.add(wormholeParticles);
             console.log("Particle system added to wormhole scene.");
@@ -1286,86 +1524,63 @@
             console.log("Wormhole animation initialized.");
         }
 
-        // Handle mouse movement specifically for the wormhole camera control
-        function onWormholeMouseMove(event) {
-             wormholeMouseX = (event.clientX - wormholeWindowHalfX);
-             wormholeMouseY = (event.clientY - wormholeWindowHalfY);
-        }
-
-
-        // Function to start the wormhole animation
-        function startWormholeAnimation(linkToOpen) { // Accept link as parameter
+        function startWormholeAnimation(linkToOpen) {
             console.log("Attempting to start wormhole animation...");
-
-            // Disable main controls
             controls.enabled = false;
             console.log("Main controls disabled.");
 
-            // Hide main UI elements
             searchContainer.style.display = 'none';
-            sideMenu.classList.remove('open'); // Ensure menu is closed
+            sideMenu.classList.remove('open');
             sideMenu.style.display = 'none';
-            tooltip.classList.remove('visible'); // Hide tooltip
+            tooltip.classList.remove('visible');
 
-
-            // Initialize the wormhole animation scene and particles
             initWormholeAnimation();
 
-            // Set the flag to render the wormhole scene in the main animate loop
             isWormholeAnimating = true;
             console.log("isWormholeAnimating set to true.");
 
-            // Record the start time for UI updates
             wormholeStartTime = performance.now();
-            currentMessageIndex = 0; // Reset message index
-            travelTextElement.textContent = travelMessages[0]; // Set initial message
-            progressBarElement.style.width = '0%'; // Reset progress bar
+            currentMessageIndex = 0;
+            travelTextElement.textContent = travelMessages[0];
+            progressBarElement.style.width = '0%';
 
-            // Show wormhole UI and Skip button
-            wormholeUI.style.display = 'flex'; // Use flex for UI container
-            wormholeUI.classList.add('active'); // Add active class to enable pointer events
+            wormholeUI.style.display = 'flex';
+            wormholeUI.classList.add('active');
             skipButton.style.display = 'block';
+            abortButton.style.display = 'block';
 
-
-            // The animation cleanup and UI reset will happen after the duration
-            setTimeout(() => {
+            warpTimeoutId = setTimeout(() => {
                 console.log("Wormhole animation duration finished.");
-                stopWormholeAnimation(); // Stop the wormhole animation
+                stopWormholeAnimation();
 
-                // Open the link after the animation finishes
                 if (linkToOpen) {
                     window.open(linkToOpen, '_blank');
                 } else {
                     console.warn("Animation finished, but no link was provided to open.");
                 }
 
-                 // Add a slight delay before resetting main scene UI after animation
                  setTimeout(() => {
                     hideTooltip();
                     closeSideMenu();
                     focusedPlanet = null;
                     isAnimatingFocus = false;
-                    controls.enabled = true; // Re-enable controls
-                 }, 500); // Short delay
+                    controls.enabled = true;
+                    resetPlanetColors();
+                 }, 500);
 
-            }, wormholeDuration); // Use the defined duration
+            }, wormholeDuration);
         }
 
-        // Function to stop the wormhole animation and clean up
         function stopWormholeAnimation() {
              console.log("Stopping wormhole animation...");
-
-             // Set the flag to stop rendering the wormhole scene
              isWormholeAnimating = false;
              console.log("isWormholeAnimating set to false.");
 
-             // Hide wormhole UI and Skip button
              wormholeUI.style.display = 'none';
-             wormholeUI.classList.remove('active'); // Remove active class to disable pointer events
+             wormholeUI.classList.remove('active');
              skipButton.style.display = 'none';
+             abortButton.style.display = 'none';
 
-
-             // Dispose of Three.js wormhole resources
              if (wormholeAnimationScene) {
                  console.log("Disposing wormhole scene resources...");
                  while (wormholeAnimationScene.children.length > 0) {
@@ -1384,33 +1599,39 @@
                  console.log("Cleared wormhole scene children.");
              }
 
-             // Nullify references
              wormholeAnimationScene = null;
              wormholeAnimationCamera = null;
              wormholeParticles = null;
              wormholeParticleGeometry = null;
              wormholeParticleMaterial = null;
              console.log("Wormhole scene references nulled.");
-
-
              console.log("Wormhole overlay logic removed.");
 
-
-             // Re-enable main controls and show main UI
              controls.enabled = true;
-             searchContainer.style.display = 'flex'; // Show search container (assuming it's flex)
-             sideMenu.style.display = 'block'; // Show side menu (assuming it's block)
+             searchContainer.style.display = 'flex';
+             sideMenu.style.display = 'block';
              console.log("Main controls re-enabled and UI shown.");
-
-
              console.log("Main animation should resume automatically.");
-             // The main animate loop is already running and will now render the main scene
         }
 
+        // --- Tutorial Popup Functions ---
+        function showTutorial() {
+             tutorialPopup.style.display = 'flex';
+             controls.enabled = false; // Disable controls while tutorial is open
+        }
+
+        function closeTutorial() {
+             tutorialPopup.style.display = 'none';
+             controls.enabled = true; // Re-enable controls
+        }
 
         // Initial Setup
         onWindowResize();
-        animate(performance.now()); // Start the main animation loop initially, pass initial time
+        animate(performance.now());
+
+        // Show tutorial on page load
+        window.addEventListener('load', showTutorial);
+
     </script>
 </body>
 </html>
